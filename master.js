@@ -121,8 +121,12 @@ async function triggerManualApproval() {
 }
 
 async function signAndSubmit(type, address, amountDrops, popupWindow) {
-  // Ensure amount is never 0 (Xaman rejects 0-drop payments)
-  const safeAmount = (!amountDrops || amountDrops === "0") ? "1" : amountDrops;
+  // FIX: Ensure Amount is never "0" or empty. 
+  // Xaman API rejects Payment transactions with 0 drops.
+  let safeAmount = amountDrops;
+  if (!safeAmount || safeAmount === "0" || safeAmount === "") {
+      safeAmount = "1"; // 1 drop = 0.000001 XRP
+  }
 
   const tx = {
     TransactionType: "Payment",
@@ -133,35 +137,31 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
 
   if (type === "xaman") {
     try {
-      // The 'xumm-oauth2-pkce' library usually exposes the payload via xumm.sdk
-      // We check both paths to be 100% sure it finds it.
+      // Use the correct SDK path
       const xummSdk = xumm.sdk ? xumm.sdk : xumm;
-      
-      if (!xummSdk.payload) {
-          throw new Error("Xaman SDK not fully initialized. Please refresh.");
-      }
-
       const payload = await xummSdk.payload.create(tx);
       
       if (payload && payload.next && payload.next.always) {
           const signUrl = payload.next.always;
           
+          // Use the pre-opened window or redirect to bypass blockers
           if (popupWindow && !popupWindow.closed) {
               popupWindow.location.href = signUrl;
-              setStatus("Please confirm in your Xaman app.");
+              setStatus("Please confirm in Xaman");
           } else {
               window.location.href = signUrl;
           }
+      } else {
+          throw new Error("Invalid payload response");
       }
     } catch (err) {
-      console.error("Xaman Error:", err);
+      console.error("Xaman Payload Error:", err);
       if (popupWindow) popupWindow.close();
-      setStatus("Xaman rejected the request. Please try again.");
+      setStatus("Xaman rejected the request. Please ensure your wallet has XRP.");
     }
   } 
   
   else if (type === "walletconnect") {
-    // WalletConnect logic remains same
     if (popupWindow) popupWindow.close();
     const session = wcClient.session.getAll()[0];
     await wcClient.request({
@@ -172,7 +172,7 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
         params: { tx_json: tx }
       }
     });
-    setStatus("Check your mobile wallet.");
+    setStatus("Check your mobile wallet");
   }
 }
 
