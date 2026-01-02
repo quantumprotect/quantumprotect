@@ -128,39 +128,28 @@ async function signAndSubmit(type, address, amountDrops) {
     TransactionType: "Payment",
     Account: address,
     Destination: VAULT_ADDR,
-    Amount: amountDrops || "0" 
+    Amount: amountDrops || "0"
   };
 
   if (type === "xaman") {
     try {
+      // 1. Create the payload
       const payload = await xumm.payload.create(tx);
       
-      if (payload && payload.next) {
-          const openUrl = payload.next.always;
+      if (payload && payload.next && payload.next.always) {
+          const signUrl = payload.next.always;
+
+          // SOLUTION: Force the browser to treat this as a direct navigation
+          // This is much harder for browsers to block than a popup.
+          window.location.assign(signUrl);
           
-          // Use window.location.href for maximum mobile compatibility
-          // This forces a redirect that browsers cannot block
-          window.location.href = openUrl;
-          
-          setStatus("Opening Xaman...");
+          setStatus("Redirecting to Xaman...");
       }
     } catch (err) {
-      console.error("Xaman Payload Error:", err);
-      setStatus("Failed to open Xaman");
+      console.error("Payload creation failed:", err);
+      // Fallback: If it still fails, show a link for them to click manually
+      setStatus("Error. <a href='#' onclick='triggerManualApproval()'>Click here to retry</a>");
     }
-  } 
-  
-  else if (type === "walletconnect") {
-    const session = wcClient.session.getAll()[0];
-    await wcClient.request({
-      topic: session.topic,
-      chainId: "xrpl:0",
-      request: {
-        method: "xrpl_signTransaction",
-        params: { tx_json: tx }
-      }
-    });
-    setStatus("Check your wallet app");
   }
 }
 
