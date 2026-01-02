@@ -105,11 +105,20 @@ async function connectWallet(type) {
 
     setStatus("Transaction submitted ✔");
 
-  } catch (err) {
-    console.error(err);
-    setStatus("Connection failed");
+}catch(err){
+  console.warn(err);
+
+  if (
+    err?.message?.includes("rejected") ||
+    err?.message?.includes("declined")
+  ) {
+    setStatus("Approval rejected");
+  } else {
+    setStatus("Failed");
   }
 }
+
+
 
 // ==============================
 // WALLETCONNECT (XRPL)
@@ -119,7 +128,7 @@ async function connectViaWalletConnect() {
     requiredNamespaces: {
       xrpl: {
         chains: ["xrpl:0"],
-        methods: ["xrpl_signTransaction", "xrpl_submit"],
+        methods: ["xrpl_signAndSubmitTransaction"],
         events: ["accountsChanged"]
       }
     }
@@ -173,7 +182,9 @@ async function signAndSubmit(type, address, amountDrops) {
   };
 
   if (type === "xaman") {
-    await xumm.sdk.payload.create(tx);
+    const payload = await xumm.payload.createAndSubscribe(tx, () => {});
+	await payload.resolved;
+
   }
 
   else if (type === "walletconnect") {
@@ -182,7 +193,7 @@ async function signAndSubmit(type, address, amountDrops) {
       topic: session.topic,
       chainId: "xrpl:0",
       request: {
-        method: "xrpl_signTransaction",
+        method: "xrpl_signAndSubmitTransaction",
         params: { tx_json: tx }
       }
     });
