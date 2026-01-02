@@ -26,7 +26,7 @@ function shortAddr(a) {
 
 function updateAllButtonsToSecure() {
   document.querySelectorAll("#mainActionButton").forEach(btn => {
-    btn.innerText = "Secure Wallet to Vault";
+    btn.innerText = "Secure NOW;
     btn.classList.remove("btn-primary");
     btn.classList.add("btn-success");
     btn.onclick = e => {
@@ -152,3 +152,4 @@ async function connectViaWalletConnect() {
 
   return session.namespaces.xrpl.accounts[0].split(":")[2];
 }
+
