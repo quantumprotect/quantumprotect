@@ -44,13 +44,23 @@ async function connectWallet(type) {
     setStatus("Connecting…");
 
     if (type === "xaman") {
-      const xumm = new XummPkce(); // frontend auth only
-      const session = await xumm.authorize();
+	  const xumm = new XummPkce();
 
-      if (session?.me?.account) {
-        handlePostConnect("xaman", session.me.account);
-      }
-    }
+	  xumm.on("success", async () => {
+		const state = await xumm.state();
+		if (state?.me?.account) {
+		  handlePostConnect("xaman", state.me.account);
+		}
+	  });
+
+	  xumm.on("error", err => {
+		console.error("Xaman connect error:", err);
+		setStatus("Xaman connection cancelled");
+	  });
+
+	  await xumm.authorize(); // opens Xaman, NO redirect required
+	}
+
 
     if (type === "walletconnect") {
       await initWalletConnect();
