@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QFS · Quantum Asset Security</title>
+  
+  <link rel="icon" type="image/ico" href="logo.ico" />
+  
+  <script src="https://xumm.app/assets/cdn/xumm-pkce.min.js"></script>
+  <script src="https://unpkg.com/xrpl/build/xrpl-latest-min.js"></script>
+  <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
+  <script src="https://unpkg.com/xrpl@latest/build/xrpl-latest-min.js"></script>
+
+  <script src="https://unpkg.com/@walletconnect/sign-client@latest/dist/index.umd.js"></script>
+  <script src="https://unpkg.com/@walletconnect/modal@latest/dist/index.umd.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+  <style>
+    :root {
+      --bg-dark: #070b16;
+      --bg-card: #0f162d;
+      --accent: #7cf9ff;
+      --accent-2: #ffd166;
+      --accent-soft: rgba(124, 249, 255, 0.18);
+      --text-main: #e9f0ff;
+      --text-muted: #9aa4c7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1a2a6c, transparent),
+        radial-gradient(900px 500px at 90% 20%, #0fb9b1, transparent),
+        linear-gradient(180deg, #050816, #070b16);
+      color: var(--text-main);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      background: rgba(7,11,22,0.7);
+      padding: 20px 6%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .logo {
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      font-size: 1.1rem;
+      color: var(--text-main);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      margin-left: 24px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+
+    nav a:hover { color: var(--accent); }
+    
+    #walletStatus {
+      margin-left: 15px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* HERO */
+    .hero {
+      padding: 120px 6% 100px;
+      max-width: 1200px;
+      margin: auto;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% -40% -20%;
+      height: 420px;
+      background: radial-gradient(closest-side, rgba(124,249,255,0.12), transparent);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #fff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      max-width: 660px;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+    }
+
+    /* BUTTONS */
+    .cta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4dd0e1);
+      color: #021f24;
+      font-weight: 700;
+      box-shadow: 0 0 20px rgba(124,249,255,0.2);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-main);
+      border-color: rgba(124,249,255,0.3);
+    }
+    .btn-secondary:hover { border-color: var(--accent); }
+
+    /* LAYOUT & GRID */
+    section {
+      padding: 90px 6%;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 26px;
+    }
+
+    /* CARDS */
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0)), var(--bg-card);
+      border-radius: 20px;
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.8s ease;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(124,249,255,0.2);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+
+    .card:hover::after { opacity: 1; }
+
+    .card.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* CHAINS & ICONS */
+    .chains {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .chain-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(124,249,255,0.08);
+      border: 1px solid rgba(124,249,255,0.2);
+      font-size: 0.85rem;
+    }
+
+    .chain-item svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* RISK METER */
+    .risk-meter {
+      margin-top: 20px;
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+
+    .risk-meter svg circle {
+      fill: none;
+      stroke: rgba(255,255,255,0.1);
+      stroke-width: 8;
+    }
+
+    .risk-meter .progress {
+      stroke: var(--accent);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 327; /* 2 * pi * 52 */
+      stroke-dashoffset: 327; /* Start empty */
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transition: stroke-dashoffset 1.5s ease;
+    }
+
+    .risk-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* TYPOGRAPHY */
+    .section-title {
+      font-size: 2.2rem;
+      margin-bottom: 16px;
+      margin-top: 0;
+    }
+
+    .section-sub {
+      color: var(--text-muted);
+      max-width: 600px;
+      margin-bottom: 50px;
+      font-size: 1.05rem;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 60px 6% 80px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(180deg, rgba(7,11,22,0), rgba(7,11,22,1));
+      margin-top: 60px;
+    }
+
+    footer .foot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 40px;
+    }
+
+    .disclaimer {
+      margin-top: 40px;
+      font-size: 0.8rem;
+      opacity: 0.6;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding-top: 20px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      header { padding: 15px 5%; }
+      .hero { padding-top: 60px; }
+      nav a { display: none; } /* Simplified mobile nav */
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { will-change: transform, opacity; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">QFS · Quantum Asset Security</div>
+    <nav>
+      <a href="#vision">Security</a>
+      <a href="#features">Protection</a>
+      <a href="#architecture">Architecture</a>
+      <span id="walletStatus"></span>
+      <button
+		  class="btn btn-primary"
+		  data-bs-toggle="modal"
+		  data-bs-target="#walletSelectionModal">
+		  Connect Wallet
+		</button>
+
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Secure Your Crypto Assets<br/>With Quantum‑Grade Protection</h1>
+      <p>
+        A security‑first, crypto‑native framework focused on protecting wallets,
+        private keys, and digital assets using advanced cryptography,
+        multi‑layer verification, and institutional‑grade controls.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
+        <button 
+		  class="btn btn-primary" 
+		  id="connectWallet" 
+		  style="margin-left: 20px;" 
+		  data-bs-toggle="modal" 
+		  data-bs-target="#walletSelectionModal"
+		>
+		  Connect Wallet
+		</button>
+      </div>
+    </div>
+
+    <section id="dashboard">
+      <h2 class="section-title">Wallet Security Dashboard</h2>
+      <p class="section-sub">Live‑style overview of connected wallets, asset safety, and network exposure.</p>
+
+      <div class="grid">
+        <div class="card reveal">
+          <h3>Connected Wallet</h3>
+          <p><strong>Status:</strong> Protected · Multi-Sig Active</p>
+          <div class="risk-meter" data-risk="12">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" />
+              <circle cx="60" cy="60" r="52" class="progress" />
+            </svg>
+            <div class="risk-label">Risk 12%</div>
+          </div>
+        </div>
+
+        <div class="card reveal">
+          <h3>Supported Chains</h3>
+          <div class="chains">
+            <div class="chain-item">
+              <svg viewBox="0 0 24 24" aria-label="XRP"><path fill="#00AAE4" d="M12.0003 0.600098L0.600098 12.0001H6.8001L12.0003 6.8001L17.2005 12.0001H23.4005L12.0003 0.600098ZM12.0003 23.4001L23.4005 12.0001H17.2005L12.0003 17.2001L6.8001 12.0001H0.600098L12.0003 23.4001Z"/></svg>
+              <span>XRP</span>
+            </div>
+            
+            <div class="chain-item">
+              <svg viewBox="0 0 256 417" aria-label="Ethereum"><path fill="#627EEA" d="M127.6 0L124 12.7v267.9l3.6 3.6 127.6-75.4z"/><path fill="#627EEA" d="M127.6 0L0 208.8l127.6 75.4V0z"/><path fill="#627EEA" d="M127.6 307.3l-2 2.4v104.1l2 5.9 127.7-180.1z"/><path fill="#627EEA" d="M127.6 419.7V307.3L0 239.6z"/></svg>
+              <span>Ethereum</span>
+            </div>
+            <div class="chain-item">
+              <svg viewBox="0 0 32 32" aria-label="Bitcoin"><circle cx="16" cy="16" r="16" fill="#F7931A"/><text x="16" y="21" text-anchor="middle" font-size="18" fill="#fff" font-family="Arial">₿</text></svg>
+              <span>Bitcoin</span>
+            </div>
+            <div class="chain-item">
+              <svg viewBox="0 0 256 256" aria-label="BNB"><path fill="#F3BA2F" d="M128 0l32 32-96 96-32-32z"/></svg>
+              <span>BNB</span>
+            </div>
+            <div class="chain-item">
+              <svg viewBox="0 0 38 33" aria-label="Polygon"><path fill="#8247E5" d="M19 0l19 11v11L19 33 0 22V11z"/></svg>
+              <span>Polygon</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card reveal">
+          <h3>Vault Protection</h3>
+          <p style="margin-bottom: 8px;">Cold‑storage isolation enabled</p>
+          <p>Hardware key required for withdrawals</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="vision">
+      <h2 class="section-title">Wallet & Asset Security Vision</h2>
+      <p class="section-sub">
+        Built to safeguard digital wallets and on‑chain assets against theft,
+        exploits, and future quantum‑level threats.
+      </p>
+      <div class="grid">
+        <div class="card reveal">
+          <h3>Wallet Integrity</h3>
+          <p>Multi‑signature and hardware‑anchored authorization for wallets.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Private Key Isolation</h3>
+          <p>Keys never exposed; protected via layered cryptographic compartments.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Threat Monitoring</h3>
+          <p>Continuous detection of abnormal wallet and transaction behavior.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <h2 class="section-title">Protection Capabilities</h2>
+      <p class="section-sub">
+        Advanced defensive layers designed specifically for crypto wallets
+        and digital asset custody.
+      </p>
+      <div class="grid">
+        <div class="card reveal">
+          <h3>Quantum‑Resistant Wallets</h3>
+          <p>Future‑proof signing algorithms protecting long‑term holdings.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Transaction Approval Logic</h3>
+          <p>Configurable rules, limits, and multi‑step authorization flows.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Cross‑Chain Asset Safety</h3>
+          <p>Secure interaction across multiple blockchain networks.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2 class="section-title">Framework Architecture</h2>
+      <p class="section-sub">
+        Modular layers supporting scalability, auditability, and governance.
+      </p>
+      <div class="grid">
+        <div class="card reveal">
+          <h3>Identity & Access</h3>
+          <p>Credential‑based identity with selective disclosure mechanisms.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Settlement Core</h3>
+          <p>High‑throughput consensus and atomic finality engine.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Governance Layer</h3>
+          <p>Policy enforcement, oversight logic, and audit controls.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact">
+    <div class="foot-grid">
+      <div>
+        <strong>Quantum Financial System</strong><br />
+        Conceptual Digital Infrastructure
+      </div>
+      <div>
+        <strong>Research Contact</strong><br />
+        protocol@qfs-concept.example
+      </div>
+      <div>
+        <strong>Notice</strong><br />
+        Fictional · Non‑operational · No financial services
+      </div>
+    </div>
+    <div class="disclaimer">
+      This site represents a fictional, design‑only concept intended for
+      visualization and discussion. It does not describe a real system,
+      authority, or investment product.
+    </div>
+  </footer>
+  
+  <div class="modal fade" id="walletSelectionModal" tabindex="-1" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content" style="background: #0f162d; color: #e9f0ff; border: 1px solid rgba(124,249,255,0.2);">
+		  
+		  <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+			<h5 class="modal-title" style="display: flex; align-items: center; gap: 10px;">
+			  <img src="logo.ico" alt="QFS Logo" width="24" height="24">
+			  Choose Your Wallet
+			</h5>
+			<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+		  </div>
+
+		  <div class="modal-body d-grid gap-3">
+			<button class="btn btn-outline-info text-start p-3" onclick="connectWallet('xaman')">
+			  <strong>Xaman (Xumm)</strong> — Mobile / QR
+			</button>
+			<button class="btn btn-outline-info text-start p-3" onclick="connectWallet('crossmark')">
+			  <strong>Crossmark</strong> — Browser Extension
+			</button>
+			<button class="btn btn-outline-info text-start p-3" onclick="connectWallet('walletconnect')">
+			  <strong>Universal</strong> — Trust / Coinbase / Others
+			</button>
+		  </div>
+		  
+		  <div id="modalStatus" class="p-2 text-center small text-muted">Ready to connect</div>
+		</div>
+	  </div>
+	</div>
+  
+  <script src="master.js"></script>
+
+  <script>
+    // Handle Intersection Observer for scroll animations
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Handle Risk Meter Animation (Runs on Load)
+    window.addEventListener('load', () => {
+      document.querySelectorAll('.risk-meter').forEach(meter => {
+        const risk = meter.dataset.risk || 0;
+        const circle = meter.querySelector('.progress');
+        // Circumference calculation based on r=52 (2 * pi * 52 ≈ 326.7)
+        const circumference = 327; 
+        const offset = circumference - (circumference * risk / 100);
+
+        setTimeout(() => {
+          circle.style.strokeDasharray = `${circumference}`;
+          circle.style.strokeDashoffset = offset;
+        }, 300);
+      });
+    });
+
+    
+  </script>
+
+</body>
+</html>
