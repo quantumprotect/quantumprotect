@@ -90,10 +90,18 @@ async function triggerManualApproval() {
       body: JSON.stringify({ address: currentAddress })
     });
 
+    // 🔴 ADD THIS BLOCK RIGHT HERE
+    if (!res.ok) {
+      const err = await res.json();
+      setStatus(err.detail || "Wallet has insufficient XRP");
+      return;
+    }
+
+    // ✅ Only parse success responses
     const data = await res.json();
 
     if (!data.signUrl) {
-      setStatus(data.error || "Unable to create approval");
+      setStatus("Unable to create approval");
       return;
     }
 
