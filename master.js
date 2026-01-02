@@ -1,7 +1,7 @@
 // ==============================
 // CONFIG
 // ==============================
-const BACKEND_URL = "https://cultured.pythonanywhere.com/"; 
+const BACKEND_URL = "https://cultured.pythonanywhere.com"; 
 const WC_PROJECT_ID = "YOUR_PROJECT_ID"; // Keep your WalletConnect ID here
 const XAMAN_API_KEY = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66"; // Your provided Key
 
@@ -161,4 +161,5 @@ async function connectViaWalletConnect() {
   wcModal.closeModal();
 
   return session.namespaces.xrpl.accounts[0].split(":")[2];
+
 }
