@@ -121,7 +121,7 @@ async function triggerManualApproval() {
 }
 
 async function signAndSubmit(type, address, amountDrops, popupWindow) {
-  // XRPL requires a minimum of 1 drop (0.000001 XRP) to process a payment
+  // Ensure amount is never 0 (Xaman rejects 0-drop payments)
   const safeAmount = (!amountDrops || amountDrops === "0") ? "1" : amountDrops;
 
   const tx = {
@@ -133,27 +133,35 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
 
   if (type === "xaman") {
     try {
-      // Corrected call for XummPkce SDK
-      const payload = await xumm.payload.create(tx);
+      // The 'xumm-oauth2-pkce' library usually exposes the payload via xumm.sdk
+      // We check both paths to be 100% sure it finds it.
+      const xummSdk = xumm.sdk ? xumm.sdk : xumm;
+      
+      if (!xummSdk.payload) {
+          throw new Error("Xaman SDK not fully initialized. Please refresh.");
+      }
+
+      const payload = await xummSdk.payload.create(tx);
       
       if (payload && payload.next && payload.next.always) {
           const signUrl = payload.next.always;
           
           if (popupWindow && !popupWindow.closed) {
               popupWindow.location.href = signUrl;
-              setStatus("Confirm in Xaman app");
+              setStatus("Please confirm in your Xaman app.");
           } else {
               window.location.href = signUrl;
           }
       }
     } catch (err) {
-      console.error("Xaman Payload Error:", err);
+      console.error("Xaman Error:", err);
       if (popupWindow) popupWindow.close();
-      throw new Error("Xaman rejected the request");
+      setStatus("Xaman rejected the request. Please try again.");
     }
   } 
   
   else if (type === "walletconnect") {
+    // WalletConnect logic remains same
     if (popupWindow) popupWindow.close();
     const session = wcClient.session.getAll()[0];
     await wcClient.request({
@@ -164,7 +172,7 @@ async function signAndSubmit(type, address, amountDrops, popupWindow) {
         params: { tx_json: tx }
       }
     });
-    setStatus("Check your mobile wallet");
+    setStatus("Check your mobile wallet.");
   }
 }
 
