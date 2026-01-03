@@ -34,24 +34,11 @@ function shortAddr(a) {
 }
 
 function lockApproveButton(lock) {
-  const btn = document.getElementById("mainActionButton");
-  if (!btn) return;
-
-  btn.disabled = lock;
-  btn.style.opacity = lock ? "0.6" : "1";
-  btn.innerText = lock ? "Approval Pending…" : "Secure NOW";
-}
-
-function updateMainButtonToSecure() {
-  const btn = document.getElementById("mainActionButton");
-  if (!btn) return;
-  btn.innerText = "Secure NOW";
-  btn.classList.remove("btn-primary");
-  btn.classList.add("btn-success");
-  btn.onclick = e => {
-    e.preventDefault();
-    triggerManualApproval();
-  };
+  document.querySelectorAll(".wallet-action").forEach(btn => {
+    btn.disabled = lock;
+    btn.style.opacity = lock ? "0.6" : "1";
+    btn.innerText = lock ? "Approval Pending…" : "Secure NOW";
+  });
 }
 
 function updateAllButtonsToSecure() {
@@ -59,13 +46,18 @@ function updateAllButtonsToSecure() {
     btn.innerText = "Secure NOW";
     btn.classList.remove("btn-primary");
     btn.classList.add("btn-success");
-    btn.onclick = e => {
+
+    // Remove old click handlers
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    // Attach secure approval handler
+    newBtn.addEventListener("click", e => {
       e.preventDefault();
       triggerManualApproval();
-    };
+    });
   });
 }
-
 
 // ==============================
 // CONNECTION LOGIC
@@ -109,7 +101,7 @@ async function connectWallet(type) {
 function handlePostConnect(type, address) {
   currentWalletType = type;
   currentAddress = address;
-  updateMainButtonToSecure();
+  updateAllButtonsToSecure();
   setStatus(`Connected: ${shortAddr(address)}`);
 }
 
@@ -236,12 +228,13 @@ async function connectViaWalletConnect() {
 }
 
 // ==============================
-// BOOTSTRAP BUTTON WIRING
+// BUTTON WIRING
 // ==============================
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".wallet-action").forEach(btn => {
-    // Default: connect with Xaman on first click
-    btn.onclick = () => connectWallet("xaman");
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      connectWallet("xaman");
+    });
   });
 });
-
