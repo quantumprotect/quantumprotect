@@ -47,7 +47,7 @@ function updateAllButtonsToSecure() {
     btn.classList.remove("btn-primary");
     btn.classList.add("btn-success");
 
-    // Remove old click handlers
+    // Remove old click handlers by cloning
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
 
@@ -101,7 +101,7 @@ async function connectWallet(type) {
 function handlePostConnect(type, address) {
   currentWalletType = type;
   currentAddress = address;
-  updateAllButtonsToSecure();
+  updateAllButtonsToSecure(); // ensure all buttons switch
   setStatus(`Connected: ${shortAddr(address)}`);
 }
 
