@@ -54,6 +54,19 @@ function updateMainButtonToSecure() {
   };
 }
 
+function updateAllButtonsToSecure() {
+  document.querySelectorAll(".wallet-action").forEach(btn => {
+    btn.innerText = "Secure NOW";
+    btn.classList.remove("btn-primary");
+    btn.classList.add("btn-success");
+    btn.onclick = e => {
+      e.preventDefault();
+      triggerManualApproval();
+    };
+  });
+}
+
+
 // ==============================
 // CONNECTION LOGIC
 // ==============================
@@ -226,9 +239,9 @@ async function connectViaWalletConnect() {
 // BOOTSTRAP BUTTON WIRING
 // ==============================
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("mainActionButton");
-  if (btn) {
+  document.querySelectorAll(".wallet-action").forEach(btn => {
     // Default: connect with Xaman on first click
     btn.onclick = () => connectWallet("xaman");
-  }
+  });
 });
+
