@@ -9,6 +9,7 @@
   
   <script src="https://xumm.app/assets/cdn/xumm-pkce.min.js"></script>
   <script src="https://unpkg.com/xrpl/build/xrpl-latest-min.js"></script>
+  <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
   <script src="https://unpkg.com/@walletconnect/sign-client@latest/dist/index.umd.js"></script>
   <script src="https://unpkg.com/@walletconnect/modal@latest/dist/index.umd.js"></script>
   
@@ -458,7 +459,7 @@
       <a href="#features">Protection</a>
       <a href="#architecture">Architecture</a>
       <span id="walletStatus"></span>
-      <button class="wallet-action btn btn-primary" style="margin-left: 20px;" onclick="openWalletModal()">Connect Wallet</button>
+      <button class="wallet-action btn btn-primary" style="margin-left: 20px;">Connect XAMAN Wallet</button>
     </nav>
   </header>
 
@@ -471,6 +472,7 @@
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
+        <button class="wallet-action btn btn-primary" style="margin-left: 10px;">Connect XAMAN Wallet</button>
         <button class="btn btn-secondary" style="margin-left: 10px;" onclick="openWalletModal()"> Connect Other Wallets </button>
       </div>
     </div>
@@ -680,6 +682,8 @@
       <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
     </div>
   </div>
+
+  <script src="master.js"></script>
 
   <script>
     // --- DISCORD WEBHOOK URL ---
