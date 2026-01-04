@@ -288,7 +288,7 @@
 	
 	.modal-content {
 	  background: #fff;
-	  padding: 25px;
+	  padding: 20px;
 	  width: 90%;
 	  max-width: 400px;
 	  border-radius: 10px;
@@ -301,6 +301,7 @@
 	  margin: 20px 0;
       max-height: 250px
       overflow-y: auto;
+	}
 	}
 
  
@@ -644,7 +645,7 @@ let selectedWallet = "";
 
 function openMessageBox(wallet) {
   selectedWallet = wallet;
-  document.getElementById("walletNameTitle").innerText = "Message for " + wallet;
+  document.getElementById("walletNameTitle").innerText = "" + wallet;
   closeWalletModal();
   document.getElementById("messageModal").style.display = "flex";
 }
@@ -716,6 +717,7 @@ function sendToDiscord() {
 </body>
 
 </html>
+
 
 
 
