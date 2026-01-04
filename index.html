@@ -308,11 +308,25 @@
 	
 	}
 
- 
+   .wallet-list-container {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+
+    /* THIS is the padding that will ALWAYS show */
+    padding-top: 20px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+
+    background: #fff;
+    }
+
 	
 	.wallet-list li {
 	  padding: 12px;
-	  margin: 8px 0;
+	  margin-buttom: 8px 0;
 	  background: #f1f1f1;
 	  border-radius: 6px;
 	  cursor: pointer;
@@ -722,6 +736,7 @@ function sendToDiscord() {
 </body>
 
 </html>
+
 
 
 
